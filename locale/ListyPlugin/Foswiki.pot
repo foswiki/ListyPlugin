@@ -1,0 +1,86 @@
+# ListyPlugin translations
+msgid ""
+msgstr ""
+"Project-Id-Version: ListyPlugin $Id\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Michael Daum <daum@michaeldaumconsulting.com>\n"
+"Language-Team: Foswiki German Translation Team <none>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/listyplugin.tmpl:53
+msgid "Add Item"
+msgstr ""
+
+#: templates/listyplugin.tmpl:177
+msgid "Add a description to this listy item."
+msgstr ""
+
+#: templates/listyplugin.tmpl:88
+msgid "Add an item"
+msgstr ""
+
+#: templates/listyplugin.tmpl:196
+msgid "Are you sure that you want to delete %1?"
+msgstr ""
+
+#: templates/listyplugin.tmpl:185
+msgid "Cancel"
+msgstr ""
+
+#: templates/listyplugin.tmpl:148
+msgid "Customize the text of your listy item."
+msgstr ""
+
+#: templates/listyplugin.tmpl:191
+msgid "Delete Listy Item"
+msgstr ""
+
+#: templates/listyplugin.tmpl:21
+msgid "Delete this item"
+msgstr ""
+
+#: templates/listyplugin.tmpl:111 templates/listyplugin.tmpl:20
+msgid "Edit this item"
+msgstr ""
+
+#: templates/listyplugin.tmpl:136
+msgid "External"
+msgstr ""
+
+#: templates/listyplugin.tmpl:75
+msgid "Revert changes"
+msgstr ""
+
+#: templates/listyplugin.tmpl:184
+msgid "Save"
+msgstr ""
+
+#: templates/listyplugin.tmpl:64
+msgid "Save changes"
+msgstr ""
+
+#: templates/listyplugin.tmpl:175
+msgid "Summary"
+msgstr ""
+
+#: templates/listyplugin.tmpl:146
+msgid "Title"
+msgstr ""
+
+#: templates/listyplugin.tmpl:133 templates/listyplugin.tmpl:159
+msgid "Topic"
+msgstr ""
+
+#: templates/listyplugin.tmpl:167
+msgid "Url"
+msgstr ""
+
+#: templates/listyplugin.tmpl:155
+msgid "Web"
+msgstr ""

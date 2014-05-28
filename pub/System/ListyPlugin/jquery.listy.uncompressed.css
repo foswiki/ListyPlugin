@@ -1,0 +1,80 @@
+.jqListy {
+  list-style-type:none;
+  padding:0;
+  margin:0;
+  min-height:1.5em;
+}
+.jqListyButtons {
+  list-style:none;
+  margin:0.5em 0;
+  padding:0;
+}
+.jqListyContainer .jqListyPlaceholder,
+.jqListyContainer .jqListyButtons li {
+  background-image:none;
+}
+.jqListy .jqListyPlaceholder {
+  min-height:2em;
+  border:2px dashed #ddd;
+  border-radius:6px;
+  margin:0.5em;
+}
+
+.jqListyItemTools {
+  display:none;
+  padding:5px 6px;
+  margin:-5px -6px -5px 0px;
+  background-color:#fff;
+}
+.jqListySave,
+.jqListyRevert {
+  display:none;
+}
+.jqListyItemTools form {
+  display:inline;
+}
+.jqListyItemTools a,
+.jqListyItemTools a:hover {
+  display:inline !important;
+  margin:0 5px 0 0 !important;
+  padding:0px !important;
+}
+.jqListySelected {
+  float:left;
+
+  -webkit-box-shadow: 1px 1px 7px rgba(0,0,0, 0.1) !important;
+     -moz-box-shadow: 1px 1px 7px rgba(0,0,0, 0.1) !important;
+          box-shadow: 1px 1px 7px rgba(0,0,0, 0.1) !important;
+
+  border-radius:6px;
+
+  opacity:0.9;
+  padding:1em !important;
+  background-color:#FFF6BF;
+  border:2px solid #FDD845 !important;
+  color:#c09853 !important;
+}
+.jqListySelected .foswikiGrayText,
+.jqListySelected .foswikiGrayText a,
+.jqListySelected .foswikiGrayText a:hover,
+.jqListySelected a,
+.jqListySelected a:hover {
+  color:#c09853 !important;
+  text-decoration:none;
+}
+.jqListySelected .jqListyItemTools {
+  display:none !important;
+}
+
+.ui-listy-dialog-content .foswikiInputField,
+.ui-listy-dialog-content .foswikiSelect,
+.ui-listy-dialog-content .foswikiTextarea {
+  width:98%;
+}
+.ui-listy-dialog-content .jqListyType .jqTabPane {
+  margin:0 -0.5em;
+}
+.ui-listy-dialog-content .jqListyType .jqTabContents {
+  padding-left:0.5em;
+  padding-right:0.5em;
+}

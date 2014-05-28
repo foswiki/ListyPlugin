@@ -1,0 +1,86 @@
+# ListyPlugin translations
+msgid ""
+msgstr ""
+"Project-Id-Version: ListyPlugin $Id\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2011-12-21 10:40+0000\n"
+"Last-Translator: Michael Daum <daum@michaeldaumconsulting.com>\n"
+"Language-Team: Foswiki German Translation Team <none>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: templates/listyplugin.tmpl:53
+msgid "Add Item"
+msgstr "Neuer Eintrag"
+
+#: templates/listyplugin.tmpl:177
+msgid "Add a description to this listy item."
+msgstr "Geben Sie eine Beschreibung für diesen Eintrag an."
+
+#: templates/listyplugin.tmpl:88
+msgid "Add an item"
+msgstr "Eintrag hinzufügen"
+
+#: templates/listyplugin.tmpl:196
+msgid "Are you sure that you want to delete %1?"
+msgstr "Sind Sie sicher, dass Sie diesen Eintrag löschen wollen? %BR% %2"
+
+#: templates/listyplugin.tmpl:185
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: templates/listyplugin.tmpl:148
+msgid "Customize the text of your listy item."
+msgstr "Passen Sie den Text dieses Eintrags an."
+
+#: templates/listyplugin.tmpl:191
+msgid "Delete Item"
+msgstr "Eintrag löschen"
+
+#: templates/listyplugin.tmpl:21
+msgid "Delete this item"
+msgstr "Diesen Eintrag löschen"
+
+#: templates/listyplugin.tmpl:111 templates/listyplugin.tmpl:20
+msgid "Edit this item"
+msgstr "Eintrag bearbeiten"
+
+#: templates/listyplugin.tmpl:136
+msgid "External"
+msgstr "Extern"
+
+#: templates/listyplugin.tmpl:75
+msgid "Revert changes"
+msgstr "Rückgängig"
+
+#: templates/listyplugin.tmpl:184
+msgid "Save"
+msgstr "Speichern"
+
+#: templates/listyplugin.tmpl:64
+msgid "Save changes"
+msgstr "Speichern"
+
+#: templates/listyplugin.tmpl:175
+msgid "Summary"
+msgstr "Zusammenfassung"
+
+#: templates/listyplugin.tmpl:146
+msgid "Title"
+msgstr "Titel"
+
+#: templates/listyplugin.tmpl:133 templates/listyplugin.tmpl:159
+msgid "Topic"
+msgstr "Topic"
+
+#: templates/listyplugin.tmpl:167
+msgid "Url"
+msgstr "Url"
+
+#: templates/listyplugin.tmpl:155
+msgid "Web"
+msgstr "Web"

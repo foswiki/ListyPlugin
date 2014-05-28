@@ -1,0 +1,238 @@
+%{ listy format - header}%
+%TMPL:DEF{"listy::header"}%<noautolink>
+<div class='jqListyContainer'>
+<ul class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}%' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' id="$listyId">
+%TMPL:END%
+
+%{ listy format}%
+%TMPL:DEF{"listy::format"}%<li id='$name'>
+  $item $itemtools
+  <div class='foswikiGrayText'>$summary</div>
+</li>%TMPL:END%
+
+%{ listy format - footer}%
+%TMPL:DEF{"listy::footer"}%
+</ul>$buttons</div></noautolink>%TMPL:END%
+
+%{ listy tools}%
+%TMPL:DEF{"listy::item::tools"}%<!-- -->
+  <span class='jqListyItemTools'>
+    <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"pencil"}%</a> 
+    <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"bin"}%</a>
+  </span>
+  <script class='jqListyData' type='application/json'> {
+    "$name": {
+        "type": "$type",
+        "web": "$web",
+        "topic": "$topic",
+        "url": "$url",
+        "title": "$urlEncode($title)",
+        "summary": "$urlEncode($summary)"
+    }
+  }</script>
+<!-- -->%TMPL:END%
+
+%{ listy buttons}%
+%TMPL:DEF{"listy::buttons"}%<!-- -->
+<ul class='jqListyButtons'>
+%TMPL:P{"listy::buttons::add"}%<!-- -->
+%TMPL:P{"listy::buttons::save"}%<!-- -->
+%TMPL:P{"listy::buttons::revert"}%<!-- -->
+</ul>
+<!-- -->%TMPL:END%
+
+%{ listy buttons - add}%
+%TMPL:DEF{"listy::buttons::add"}%<!-- -->
+  <li class='jqListyAdd'>%BUTTON{
+      "%TMPL:P{"listy::buttons::add::text"}%"
+      icon="add" 
+      class="jqButtonSimple"
+      style="float:none" 
+    }%</li>
+<!-- -->%TMPL:END%
+%TMPL:DEF{"listy::buttons::add::text"}%%MAKETEXT{"Add Item"}%%TMPL:END%
+
+%{ listy buttons - save}%
+%TMPL:DEF{"listy::buttons::save"}%<!-- -->
+  <li class='jqListySave'>%BUTTON{
+      "%TMPL:P{"listy::buttons::save::text"}%"
+      icon="disk" 
+      class="jqButtonSimple"
+      style="float:none";
+    }%</li>
+<!-- -->%TMPL:END%
+%TMPL:DEF{"listy::buttons::save::text"}%%MAKETEXT{"Save changes"}%%TMPL:END%
+
+%{ listy buttons - revert}%
+%TMPL:DEF{"listy::buttons::revert"}%<!-- -->
+<li class='jqListyRevert'>%BUTTON{
+    "%TMPL:P{"listy::buttons::revert::text"}%"
+    icon="cross" 
+    class="jqButtonSimple"
+    style="float:none";
+  }%</li>
+<!-- -->%TMPL:END%
+%TMPL:DEF{"listy::buttons::revert::text"}%%MAKETEXT{"Revert changes"}%%TMPL:END%
+
+%{ confirm delete dialog }%
+%TMPL:DEF{"listy::confirmdelete"}%<div class="ui-listy-dialog-content" data-title="%MAKETEXT{"Delete Item"}%">
+<form class="jqListyConfirmDeleteForm" name="listyConfirmDeleteForm" action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/deleteListyItem" method="post">
+<input type="hidden" name="collection" value="${collection}" />
+<input type="hidden" name="name" value="${name}" />
+<input type="hidden" name="topic" value="${source}" />
+%MAKETEXT{"Are you sure that you want to delete [_1]?" args="%BR% <b>${title}</b>"}%
+</form>
+</div>%TMPL:END%
+
+%{ listy add item dialog }%
+%TMPL:DEF{"listy::additem"}%<!-- -->
+%TMPL:P{"listy::editor::start" 
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+  title="%TMPL:P{"listy::additem::titletext"}%"
+}%<!-- -->
+%TMPL:P{"listy::editor::typestep"}%<!-- -->
+%TMPL:P{"listy::editor::titlestep"}%<!-- -->
+%TMPL:P{"listy::editor::summarystep"}%<!-- -->
+%IF{"'%URLPARAM{"showcollections" default="false"}%'='true'" then="$percntTMPL:P{\"listy::editor::collectionstep\"}$percnt"}%<!-- -->
+%TMPL:P{"listy::editor::end"}%<!-- -->
+<!-- -->%TMPL:END%
+%TMPL:DEF{"listy::additem::titletext"}%%MAKETEXT{"Add an item"}%%TMPL:END%
+
+%{listy edit item dialog - text }%
+%TMPL:DEF{"listy::edititem::text"}%<!-- -->
+%TMPL:P{"listy::editor::start" 
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+  title="%TMPL:P{"listy::edititem::titletext"}%"
+}%<!-- -->
+%TMPL:P{"listy::editor::titlestep"}%<!-- -->
+%TMPL:P{"listy::editor::summarystep"}%<!-- -->
+%IF{"'%URLPARAM{"showcollections" default="false"}%'='true'" then="$percntTMPL:P{\"listy::editor::collectionstep\"}$percnt"}%<!-- -->
+%TMPL:P{"listy::editor::end"}%<!-- -->
+<!-- -->%TMPL:END%
+
+%{listy edit item dialog - topic }%
+%TMPL:DEF{"listy::edititem::topic"}%<!-- -->
+%TMPL:P{"listy::editor::start" 
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+  title="%TMPL:P{"listy::edititem::titletext"}%"
+}%<!-- -->
+%TMPL:P{"listy::editor::topicstep"}%<!-- -->
+%TMPL:P{"listy::editor::titlestep"}%<!-- -->
+%TMPL:P{"listy::editor::summarystep"}%<!-- -->
+%IF{"'%URLPARAM{"showcollections" default="false"}%'='true'" then="$percntTMPL:P{\"listy::editor::collectionstep\"}$percnt"}%<!-- -->
+%TMPL:P{"listy::editor::end"}%<!-- -->
+<!-- -->%TMPL:END%
+
+%{listy edit item dialog - external }%
+%TMPL:DEF{"listy::edititem::external"}%<!-- -->
+%TMPL:P{"listy::editor::start" 
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+  title="%TMPL:P{"listy::edititem::titletext"}%"
+}%<!-- -->
+%TMPL:P{"listy::editor::externalstep"}%<!-- -->
+%TMPL:P{"listy::editor::titlestep"}%<!-- -->
+%TMPL:P{"listy::editor::summarystep"}%<!-- -->
+%IF{"'%URLPARAM{"showcollections" default="false"}%'='true'" then="$percntTMPL:P{\"listy::editor::collectionstep\"}$percnt"}%<!-- -->
+%TMPL:P{"listy::editor::end"}%<!-- -->
+<!-- -->%TMPL:END%
+
+%TMPL:DEF{"listy::edititem::titletext"}%%MAKETEXT{"Edit this item"}%%TMPL:END%
+
+%{listy editor - start }%
+%TMPL:DEF{"listy::editor::start"}%<div class="ui-listy-dialog-content" data-title="%title%">
+<form class="jqListyEditForm" action="%action%" method="post">
+%IF{"'%URLPARAM{"showcollections" default="false"}%'='true'" else="$percntTMPL:P{\"listy::editor::collectionstep::hidden\"}$percnt"}%<!-- -->
+<input type="hidden" name="type" value="${type}" />
+<input type="hidden" name="topic" value="${source}" />
+<input type="hidden" name="name" value="${name}" />
+<div class="foswikiFormSteps">
+<!-- -->%TMPL:END%
+
+%{listy editor - end }%
+%TMPL:DEF{"listy::editor::end"}%<!-- -->
+</div>
+</form>
+</div>%TMPL:END%
+
+%{listy editor - type tabpane }%
+%TMPL:DEF{"listy::editor::typestep"}%<!-- -->
+<div class="jqListyType foswikiFormStep">
+%FORMATLIST{"%URLPARAM{"types"}%" 
+  split="\s*,\s*"
+  header="$percntTABPANE{class=\"plain\" animate=\"on\"}$percnt"
+  format="$percntTMPL:P{\"listy::editor::typestep::$1\"}$percnt"
+  footer="$percntENDTABPANE$percnt"
+  separator="$n"
+}%<!-- -->
+</div>
+<!-- -->%TMPL:END%
+
+%TMPL:DEF{"listy::editor::typestep::text"}%<!-- -->
+%TAB{"%MAKETEXT{"Text"}%" id="text" after="jQuery('#'+newTabId).parents('form').find('input[name=type]').val('text');" }%
+%TMPL:P{"listy::editor::textstep"}%
+%ENDTAB%%TMPL:END%
+
+%TMPL:DEF{"listy::editor::typestep::topic"}%<!-- -->
+%TAB{"%MAKETEXT{"Topic"}%" id="topic" after="jQuery('#'+newTabId).parents('form').find('input[name=type]').val('topic');" }%
+%TMPL:P{"listy::editor::topicstep"}%
+%ENDTAB%%TMPL:END%
+
+%TMPL:DEF{"listy::editor::typestep::external"}%<!-- -->
+%TAB{"%MAKETEXT{"External"}%" id="external" after="jQuery('#'+newTabId).parents('form').find('input[name=type]').val('external');" }%
+%TMPL:P{"listy::editor::externalstep"}%
+%ENDTAB%%TMPL:END%
+
+
+%{listy editor - title formfield }%
+%TMPL:DEF{"listy::editor::titlestep"}%<!-- -->
+<div class="foswikiFormStep">
+  <h3>%MAKETEXT{"Title"}%:</h3>
+  <input type="text" size="40" name="title" class="foswikiInputField" value="${title}" />
+  <div class="foswikiFormDescription">%MAKETEXT{"Customize the text of your item."}%</div>
+</div>
+<!-- -->%TMPL:END%
+
+%{listy editor - text formfield }%
+%TMPL:DEF{"listy::editor::textstep"}%<div style='margin-top:-1em'></div>%TMPL:END%
+
+%{listy editor - topic formfield }%
+%TMPL:DEF{"listy::editor::topicstep"}%<!-- -->
+  <div class="foswikiFormStep jqListyTopicStep">
+    <h3>%MAKETEXT{"Web"}%:</h3>
+    <input type="text" size="40" name="listyWeb" class="foswikiInputField" value="${web}" ize="60" />
+  </div>
+  <div class="foswikiFormStep">
+    <h3>%MAKETEXT{"Topic"}%:</h3>
+    <input type="text" size="40" name="listyTopic" class="foswikiInputField" value="${topic}" />
+  </div>
+<!-- -->%TMPL:END%
+
+%{listy editor - external url formfield }%
+%TMPL:DEF{"listy::editor::externalstep"}%<!-- -->
+  <div class="foswikiFormStep jqListyExternalStep">
+    <h3>%MAKETEXT{"Url"}%:</h3>
+    <input type="text" size="40" name="url" class="foswikiInputField" value="${url}" />
+  </div>
+<!-- -->%TMPL:END%
+
+%{listy editor - external url formfield }%
+%TMPL:DEF{"listy::editor::summarystep"}%<!-- -->
+<div class="foswikiFormStep">
+  <h3>%MAKETEXT{"Summary"}%:</h3>
+  <textarea rows="5" cols="50" name="summary" class="foswikiTextarea">${summary}</textarea>
+  <div class="foswikiFormDescription">%MAKETEXT{"Add a description for this item."}%</div>
+</div>
+<!-- -->%TMPL:END%
+
+%{listy editor - collection select }%
+%TMPL:DEF{"listy::editor::collectionstep"}%<!-- -->
+<div class="foswikiFormStep">
+  <h3>%MAKETEXT{"Collection"}%:</h3>
+  {{html renderCollections()}}
+  <div class="foswikiFormDescription">%MAKETEXT{"Select the collection to hold the item."}%</div>
+</div>
+<!-- -->%TMPL:END%
+%TMPL:DEF{"listy::editor::collectionstep::hidden"}%<input type="hidden" name="collection" value="${collection}" />%TMPL:END%
+
+%{ test tmpl ... never mind }%
+%TMPL:DEF{"listy::isloaded"}%true%TMPL:END%
