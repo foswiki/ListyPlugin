@@ -243,8 +243,8 @@ sub LISTY {
     Foswiki::Plugins::JQueryPlugin::createPlugin("pnotify");
     Foswiki::Plugins::JQueryPlugin::createPlugin("blockui");
     Foswiki::Plugins::JQueryPlugin::createPlugin("tabpane");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("tmpl");
-    Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::TMPL");
+    Foswiki::Plugins::JQueryPlugin::createPlugin("render");
+    Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::RENDER");
 <script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
 HERE
 

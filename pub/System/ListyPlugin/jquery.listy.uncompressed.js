@@ -1,5 +1,5 @@
 /*
- * jQuery listy plugin 2.0
+ * jQuery listy plugin 3.0
  *
  * (c)opyright 2011-2014 Michael Daum http://michaeldaumconsulting.com
  *
@@ -643,10 +643,10 @@
     self.hideMessages();
 
     return $.Deferred(function(dfd) {
-      $.loadTmpl({
+      $.loadTemplate({
         url: opts.url
-      }).then(function(tmplName) {
-        $.tmpl(tmplName, opts.data).dialog({
+      }).then(function(template) {
+        $(template.render(opts.data)).dialog({
           buttons: [{
             text: opts.okayText,
             icons: {
