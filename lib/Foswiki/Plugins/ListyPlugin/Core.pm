@@ -294,7 +294,7 @@ sub _expandButtons {
 
   my $buttons = '';
   
-  if (Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $topic, $web)) {
+  if (!Foswiki::Func::getContext()->{static} && Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $topic, $web)) {
     $buttons = Foswiki::Func::expandTemplate("listy::buttons");
   }
 

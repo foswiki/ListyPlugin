@@ -13,31 +13,76 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: templates/listyplugin.tmpl:235 templates/listyplugin.tmpl:80
+msgid ":collection"
+msgstr ""
+
+#: templates/listyplugin.tmpl:147 templates/listyplugin.tmpl:81
+msgid ":name"
+msgstr ""
+
+#: templates/listyplugin.tmpl:146 templates/listyplugin.tmpl:82
+msgid ":source"
+msgstr ""
+
+#: templates/listyplugin.tmpl:222
+#, fuzzy
+msgid ":summary"
+msgstr "Zusammenfassung"
+
+#: templates/listyplugin.tmpl:190 templates/listyplugin.tmpl:83
+#, fuzzy
+msgid ":title"
+msgstr "Titel"
+
+#: templates/listyplugin.tmpl:206
+#, fuzzy
+msgid ":topic"
+msgstr "Topic"
+
+#: templates/listyplugin.tmpl:145
+msgid ":type"
+msgstr ""
+
+#: templates/listyplugin.tmpl:214
+msgid ":url"
+msgstr ""
+
+#: templates/listyplugin.tmpl:202
+msgid ":web"
+msgstr ""
+
+#: templates/listyplugin.tmpl:231
+msgid ":~renderCollections()"
+msgstr ""
+
 #: templates/listyplugin.tmpl:53
 msgid "Add Item"
 msgstr "Neuer Eintrag"
 
-#: templates/listyplugin.tmpl:177
-msgid "Add a description to this listy item."
+#: templates/listyplugin.tmpl:223
+#, fuzzy
+msgid "Add a description for this item."
 msgstr "Geben Sie eine Beschreibung für diesen Eintrag an."
 
-#: templates/listyplugin.tmpl:88
+#: templates/listyplugin.tmpl:99
 msgid "Add an item"
 msgstr "Eintrag hinzufügen"
 
-#: templates/listyplugin.tmpl:196
+#: templates/listyplugin.tmpl:83
 msgid "Are you sure that you want to delete %1?"
 msgstr "Sind Sie sicher, dass Sie diesen Eintrag löschen wollen? %BR% %2"
 
-#: templates/listyplugin.tmpl:185
-msgid "Cancel"
-msgstr "Abbrechen"
-
-#: templates/listyplugin.tmpl:148
-msgid "Customize the text of your listy item."
-msgstr "Passen Sie den Text dieses Eintrags an."
+#: templates/listyplugin.tmpl:230
+msgid "Collection"
+msgstr ""
 
 #: templates/listyplugin.tmpl:191
+#, fuzzy
+msgid "Customize the text of your item."
+msgstr "Passen Sie den Text dieses Eintrags an."
+
+#: templates/listyplugin.tmpl:78
 msgid "Delete Item"
 msgstr "Eintrag löschen"
 
@@ -45,11 +90,11 @@ msgstr "Eintrag löschen"
 msgid "Delete this item"
 msgstr "Diesen Eintrag löschen"
 
-#: templates/listyplugin.tmpl:111 templates/listyplugin.tmpl:20
+#: templates/listyplugin.tmpl:139 templates/listyplugin.tmpl:20
 msgid "Edit this item"
 msgstr "Eintrag bearbeiten"
 
-#: templates/listyplugin.tmpl:136
+#: templates/listyplugin.tmpl:181
 msgid "External"
 msgstr "Extern"
 
@@ -57,30 +102,40 @@ msgstr "Extern"
 msgid "Revert changes"
 msgstr "Rückgängig"
 
-#: templates/listyplugin.tmpl:184
-msgid "Save"
-msgstr "Speichern"
-
 #: templates/listyplugin.tmpl:64
 msgid "Save changes"
 msgstr "Speichern"
 
-#: templates/listyplugin.tmpl:175
+#: templates/listyplugin.tmpl:232
+msgid "Select the collection to hold the item."
+msgstr ""
+
+#: templates/listyplugin.tmpl:221
 msgid "Summary"
 msgstr "Zusammenfassung"
 
-#: templates/listyplugin.tmpl:146
+#: templates/listyplugin.tmpl:171
+msgid "Text"
+msgstr ""
+
+#: templates/listyplugin.tmpl:189
 msgid "Title"
 msgstr "Titel"
 
-#: templates/listyplugin.tmpl:133 templates/listyplugin.tmpl:159
+#: templates/listyplugin.tmpl:176 templates/listyplugin.tmpl:205
 msgid "Topic"
 msgstr "Topic"
 
-#: templates/listyplugin.tmpl:167
+#: templates/listyplugin.tmpl:213
 msgid "Url"
 msgstr "Url"
 
-#: templates/listyplugin.tmpl:155
+#: templates/listyplugin.tmpl:201
 msgid "Web"
 msgstr "Web"
+
+#~ msgid "Cancel"
+#~ msgstr "Abbrechen"
+
+#~ msgid "Save"
+#~ msgstr "Speichern"

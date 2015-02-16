@@ -272,9 +272,6 @@
         data: {
           collection: self.opts.collection,
           allCollections: self.opts.allCollections,
-          renderCollections: function() {
-            return self.renderCollections();
-          },
           name: name,
           source: self.opts.source,
           summary: decodeURIComponent(data.summary),
@@ -283,14 +280,18 @@
           topic: data.topic,
           url: data.url,
           type: data.type
+        },
+        methods: {
+          renderCollections: function() {
+            return self.renderCollections();
+          },
         }
         
       }).then(
         function(dialog) {
           $(dialog).children("form").ajaxSubmit({
-            success: function(data) {
-              var json = $.parseJSON(data),
-                  collection = json.result.collection,
+            success: function(json) {
+              var collection = json.result.collection,
                   listies = findListiesOfCollection(collection);
 
               if (listies) {
@@ -327,23 +328,24 @@
         data: {
           collection: self.opts.collection,
           allCollections: self.opts.allCollections,
-          renderCollections: function() {
-            return self.renderCollections();
-          },
           source: self.opts.source,
           summary: "",
           title: "",
           web: foswiki.getPreference("WEB"),
           topic: foswiki.getPreference("TOPIC"),
           url: ""
+        },
+        methods: {
+          renderCollections: function() {
+            return self.renderCollections();
+          },
         }
         
       }).then(
         function(dialog) {
           $(dialog).children("form").ajaxSubmit({
-            success: function(data) {
-              var json = $.parseJSON(data),
-                  collection = json.result.collection,
+            success: function(json) {
+              var collection = json.result.collection,
                   listies = findListiesOfCollection(collection);
 
               if (listies) {
@@ -613,7 +615,7 @@
         },
         open: function() {},
         data: {
-          /* default variables to be used in jquery.tmpl */
+          /* default variables to be used in jquery.render */
           /*
           web: self.opts.web,
           topic: self.opts.topic,*/
@@ -646,7 +648,7 @@
       $.loadTemplate({
         url: opts.url
       }).then(function(template) {
-        $(template.render(opts.data)).dialog({
+        $(template.render(opts.data, opts.methods)).dialog({
           buttons: [{
             text: opts.okayText,
             icons: {

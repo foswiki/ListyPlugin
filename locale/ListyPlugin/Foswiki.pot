@@ -13,43 +13,83 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: templates/listyplugin.tmpl:235 templates/listyplugin.tmpl:80
+msgid ":collection"
+msgstr ""
+
+#: templates/listyplugin.tmpl:147 templates/listyplugin.tmpl:81
+msgid ":name"
+msgstr ""
+
+#: templates/listyplugin.tmpl:146 templates/listyplugin.tmpl:82
+msgid ":source"
+msgstr ""
+
+#: templates/listyplugin.tmpl:222
+msgid ":summary"
+msgstr ""
+
+#: templates/listyplugin.tmpl:190 templates/listyplugin.tmpl:83
+msgid ":title"
+msgstr ""
+
+#: templates/listyplugin.tmpl:206
+msgid ":topic"
+msgstr ""
+
+#: templates/listyplugin.tmpl:145
+msgid ":type"
+msgstr ""
+
+#: templates/listyplugin.tmpl:214
+msgid ":url"
+msgstr ""
+
+#: templates/listyplugin.tmpl:202
+msgid ":web"
+msgstr ""
+
+#: templates/listyplugin.tmpl:231
+msgid ":~renderCollections()"
+msgstr ""
+
 #: templates/listyplugin.tmpl:53
 msgid "Add Item"
 msgstr ""
 
-#: templates/listyplugin.tmpl:177
-msgid "Add a description to this listy item."
+#: templates/listyplugin.tmpl:223
+msgid "Add a description for this item."
 msgstr ""
 
-#: templates/listyplugin.tmpl:88
+#: templates/listyplugin.tmpl:99
 msgid "Add an item"
 msgstr ""
 
-#: templates/listyplugin.tmpl:196
+#: templates/listyplugin.tmpl:83
 msgid "Are you sure that you want to delete %1?"
 msgstr ""
 
-#: templates/listyplugin.tmpl:185
-msgid "Cancel"
-msgstr ""
-
-#: templates/listyplugin.tmpl:148
-msgid "Customize the text of your listy item."
+#: templates/listyplugin.tmpl:230
+msgid "Collection"
 msgstr ""
 
 #: templates/listyplugin.tmpl:191
-msgid "Delete Listy Item"
+msgid "Customize the text of your item."
+msgstr ""
+
+#: templates/listyplugin.tmpl:78
+msgid "Delete Item"
 msgstr ""
 
 #: templates/listyplugin.tmpl:21
 msgid "Delete this item"
 msgstr ""
 
-#: templates/listyplugin.tmpl:111 templates/listyplugin.tmpl:20
+#: templates/listyplugin.tmpl:139 templates/listyplugin.tmpl:20
 msgid "Edit this item"
 msgstr ""
 
-#: templates/listyplugin.tmpl:136
+#: templates/listyplugin.tmpl:181
 msgid "External"
 msgstr ""
 
@@ -57,30 +97,34 @@ msgstr ""
 msgid "Revert changes"
 msgstr ""
 
-#: templates/listyplugin.tmpl:184
-msgid "Save"
-msgstr ""
-
 #: templates/listyplugin.tmpl:64
 msgid "Save changes"
 msgstr ""
 
-#: templates/listyplugin.tmpl:175
+#: templates/listyplugin.tmpl:232
+msgid "Select the collection to hold the item."
+msgstr ""
+
+#: templates/listyplugin.tmpl:221
 msgid "Summary"
 msgstr ""
 
-#: templates/listyplugin.tmpl:146
+#: templates/listyplugin.tmpl:171
+msgid "Text"
+msgstr ""
+
+#: templates/listyplugin.tmpl:189
 msgid "Title"
 msgstr ""
 
-#: templates/listyplugin.tmpl:133 templates/listyplugin.tmpl:159
+#: templates/listyplugin.tmpl:176 templates/listyplugin.tmpl:205
 msgid "Topic"
 msgstr ""
 
-#: templates/listyplugin.tmpl:167
+#: templates/listyplugin.tmpl:213
 msgid "Url"
 msgstr ""
 
-#: templates/listyplugin.tmpl:155
+#: templates/listyplugin.tmpl:201
 msgid "Web"
 msgstr ""
