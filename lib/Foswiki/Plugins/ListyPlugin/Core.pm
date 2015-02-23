@@ -73,6 +73,16 @@ sub new {
     @_
   }, $class);
 
+  $this->readTemplate();
+
+  $this->{format} = Foswiki::Func::expandTemplate("listy::format");
+  $this->{header} = Foswiki::Func::expandTemplate("listy::header");
+  $this->{footer} = Foswiki::Func::expandTemplate("listy::footer");
+  $this->{itemTools} = Foswiki::Func::expandTemplate("listy::item::tools") || '';
+  $this->{itemFormat}{topic} = Foswiki::Func::expandTemplate("listy::item::topic") || '';
+  $this->{itemFormat}{external} = Foswiki::Func::expandTemplate("listy::item::external") || '';
+  $this->{itemFormat}{text} = Foswiki::Func::expandTemplate("listy::item::text") || '';
+
   return $this->init($session);
 }
 
@@ -115,7 +125,8 @@ sub LISTY {
   my $theShowCollections = Foswiki::Func::isTrue($params->{showcollections}, defined($theCollections));
   ($theWeb, $theTopic) = Foswiki::Func::normalizeWebTopicName($theWeb, $theTopic);
   my $theSort = $params->{sort};
-  $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary)$/;
+  $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary|date)$/;
+  my $theReverse = Foswiki::Func::isTrue($params->{reverse}, 0);
 
   my $theTypes = $params->{type} || 'text, topic, external';
   my %types = map {$_ => 1} split(/\s*,\s*/, $theTypes);
@@ -127,41 +138,6 @@ sub LISTY {
     return ''; # better be silent instead of clutterish
   }
 
-  my $allowChange = (Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $theTopic, $theWeb));
-
-  $this->readTemplate();
-
-  my $itemTools = Foswiki::Func::expandTemplate("listy::item::tools") || '';
-  $itemTools = '' unless $allowChange;
-
-  my $theFormat = $params->{format};
-  my $defaultFormat = Foswiki::Func::expandTemplate("listy::format");
-  if (defined $theFormat) {
-    $theFormat =~ s/\$defaultformat/$defaultFormat/g;
-  } else {
-    $theFormat = $defaultFormat;
-  }
-  $theFormat =~ s/\$itemtools/$itemTools/g;
-
-  my $theHeader = $params->{header};
-  my $defaultHeader = Foswiki::Func::expandTemplate("listy::header");
-  if (defined $theHeader) {
-    $theHeader =~ s/\$defaultheader/$defaultHeader/g;
-  } else {
-    $theHeader = $defaultHeader;
-  }
-
-  my $theFooter = $params->{footer};
-  my $defaultFooter = Foswiki::Func::expandTemplate("listy::footer");
-  $theFooter = $defaultFooter unless defined $theFooter;
-  if (defined $theFooter) {
-    $theFooter =~ s/\$defaultfooter/$defaultFooter/g;
-  } else {
-    $theFooter = $defaultFooter;
-  }
-
-  my $theSeparator = $params->{separator} || '$n';
-
   my @listyItems = $this->getListyItems($theWeb, $theTopic);
 
   my %allCollections = ();
@@ -171,13 +147,20 @@ sub LISTY {
 
   if ($theSort eq 'index') {
     @listyItems = sort {$a->{index} <=> $b->{index}} @listyItems;
+  } elsif ($theSort eq 'date') {
+    @listyItems = sort {$a->{date} <=> $b->{date}} @listyItems;
   } elsif ($theSort eq 'title') {
     @listyItems = sort {$a->{title} cmp $b->{title}} @listyItems;
   } else {
     @listyItems = sort {lc($a->{$theSort}||$a->{topic}||$a->{url}||$a->{title}) cmp lc($b->{$theSort}||$b->{topic})||$b->{url}||$b->{title}} @listyItems;
   }
 
+  @listyItems = reverse @listyItems if $theReverse;
+
   writeDebug("listy ($theSort): ".join(',', map {$_->{title}} @listyItems));
+
+  my $allowChange = (Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $theTopic, $theWeb));
+  my $itemTools = $allowChange?$this->{itemTools}:'';
   
   my @results = ();
   foreach my $item (@listyItems) {
@@ -190,39 +173,107 @@ sub LISTY {
     }
 
     unless (defined($item->{type})) {
-      print STDERR "WARNING: mal-formed listy: unknown type in item $item->{name} $theWeb.$theTopic, collection=$collection\n";
+      print STDERR "WARNING: mal-formed listy: undefined type in item $item->{name} $theWeb.$theTopic, collection=$collection\n";
       next;
     }
 
-    my $line = $theFormat;
-    my $type = $item->{type};
-    my $title = $item->{title} || (($type eq 'topic')?getTopicTitle($item->{web}, $item->{topic}):$item->{url}) || '';
-    $line =~ s/\$item\b/$this->_expandListyItem($item)/ge;
+    unless ($item->{type} =~ /^(text|topic|external)$/) {
+      print STDERR "WARNING: mal-formed listy: unknown type '$item->{type}' in item $item->{name} $theWeb.$theTopic, collection=$collection\n";
+      next;
+    }
+
+    my $title = '';
+    my $class = 'jqListyItem';
+    my $summary = $item->{summary} || '';
+    my $url = '';
+
+    my $web = $item->{web} || $this->{baseWeb};
+    my $topic = $item->{topic} || $this->{baseTopic};
+    ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
+
+    if ($item->{type} eq 'topic') {
+      $title = $item->{title} || getTopicTitle($item->{web}, $item->{topic});
+      $class .= ' jqListyItemTopic';
+      $class .= ' foswikiCurrentTopicLink' if $item->{web} && $item->{topic} && $this->{baseWeb} eq $item->{web} && $this->{baseTopic} eq $item->{topic};
+      $url = Foswiki::Func::getScriptUrlPath($web, $topic, "view");
+    } elsif ($item->{type} eq 'external') {
+      $title = $item->{title}||$item->{url};
+      $class .= ' jqListyItemExternal';
+      $url = $item->{url} || '';
+    }  else {
+      $title = $item->{title};
+      $class .= ' jqListyItemText';
+    }
+
+    my $defaultItemFormat = $this->{itemFormat}{$item->{type}} || '<span class=\'$class\'>$title</span>';
+    my $itemFormat = $defaultItemFormat;
+    $itemFormat = $params->{format} if defined $params->{format};
+    $itemFormat = $params->{$item->{type}."_format"} if defined $params->{$item->{type}."_format"};
+    $itemFormat = Foswiki::Func::decodeFormatTokens($itemFormat);
+    $itemFormat = Foswiki::Func::expandCommonVariables($itemFormat, $topic, $web);
+
+    my $line = $this->{format};
+    
+    $line =~ s/\$item\b/$itemFormat/g;
+    $line =~ s/\$tools\b/$itemTools/g;
+    $line =~ s/\$class\b/$class/g;
     $line =~ s/\$date\b/Foswiki::Func::formatTime($item->{date}/g;
-    $line =~ s/\$index\b/$item->{index}/g;
-    $line =~ s/\$url\b/$this->_expandUrl($item)/ge;
-    $line =~ s/\$type\b/$type/g;
+    $line =~ s/\$index\b/$item->{index}+1/ge;
+    $line =~ s/\$url\b/$url/g;
+    $line =~ s/\$type\b/$item->{type}/g;
     $line =~ s/\$title\b/$title/g;
-    $line =~ s/\$topic\b/($item->{topic}||'')/ge;
-    $line =~ s/\$web\b/($item->{web}||'')/ge;
+    $line =~ s/\$topic\b/$topic/g;
+    $line =~ s/\$web\b/$web/g;
     $line =~ s/\$name\b/$item->{name}/g;
-    $line =~ s/\$summary\b/($item->{summary}||'')/ge;
+    $line =~ s/\$summary\b/$summary/g;
     push @results, $line;
   }
 
-  if (!scalar(@results)) {
+  my $count = scalar(@results);
+
+  if (!$count) {
     return '' if $theHidenull;
     push @results, "<!-- -->";
   }
 
-  my $result = $theHeader.join($theSeparator, @results).$theFooter;
-  $result =~ s/\$buttons\b/_expandButtons($theWeb, $theTopic, $wikiName)/ge;
-  $result =~ s/\$count/scalar(@results)/ge;
-  $result =~ s/\$sourceweb/$theWeb/g;
-  $result =~ s/\$sourcetopic/$theTopic/g;
+
+  my $topButtons = '';
+  my $bottomButtons = '';
+  my $buttons = '';
+  if (!Foswiki::Func::getContext()->{static} && $allowChange) {
+    $buttons = Foswiki::Func::expandTemplate("listy::buttons");
+  }
+  $bottomButtons = $buttons;
+
+  if ($params->{buttons}) {
+    if ($params->{buttons} eq 'top') {
+      $topButtons = $buttons;
+      $bottomButtons = '';
+    } elsif ($params->{buttons} eq 'both') {
+      $topButtons = $buttons;
+    } 
+  }
+
+  my $style = '';
+  my $width = $params->{width};
+  if (defined $width) {
+    $style = "style='width:$width'";
+  }
+
+  my $class = $params->{class} || '';
+
+  my $result = $this->{header}.join("\n", @results).$this->{footer};
+  $result =~ s/\$buttons\b/$buttons/g;
+  $result =~ s/\$topbuttons\b/$topButtons/g;
+  $result =~ s/\$bottombuttons\b/$bottomButtons/g;
+  $result =~ s/\$sourceweb\b/$theWeb/g;
+  $result =~ s/\$sourcetopic\b/$theTopic/g;
   $result =~ s/\$collection\b/$theCollection/g;
-  $result =~ s/\$showcollections/$theShowCollections?'true':'false'/ge;
-  $result =~ s/\$types/$theTypes/g;
+  $result =~ s/\$showcollections\b/$theShowCollections?'true':'false'/ge;
+  $result =~ s/\$types\b/$theTypes/g;
+  $result =~ s/\$count\b/$count/g;
+  $result =~ s/\$style\b/$style/g;
+  $result =~ s/\$class\b/$class/g;
 
   my $allCollections = defined($theCollections)?$theCollections:join(",", sort keys %allCollections);
   $result =~ s/\$allcollections/$allCollections/g;
@@ -259,7 +310,8 @@ HERE
 
   $result =~ s/\$encode\((.*?)\)/_entityEncode($1)/ges;
   $result =~ s/\$urlEncode\((.*?)\)/_urlEncode($1)/ges;
-  return Foswiki::Func::decodeFormatTokens($result).$origTml;
+  $result =~ s/\$tml\b/$origTml/g;
+  return Foswiki::Func::decodeFormatTokens($result);
 }
 
 sub _entityEncode {
@@ -287,60 +339,6 @@ sub _urlDecode {
   $text =~ s/%([\da-f]{2})/chr(hex($1))/gei;
 
   return $text;
-}
-
-sub _expandButtons {
-  my ($web, $topic, $wikiName) = @_;
-
-  my $buttons = '';
-  
-  if (!Foswiki::Func::getContext()->{static} && Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $topic, $web)) {
-    $buttons = Foswiki::Func::expandTemplate("listy::buttons");
-  }
-
-  return $buttons;
-}
-
-sub _expandUrl {
-  my ($this, $item) = @_;
-
-  if ($item->{type} eq 'topic') {
-    my $web = $item->{web} || $this->{baseWeb};
-    my $topic = $item->{topic} || $this->{baseTopic};
-    ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
-    return Foswiki::Func::getScriptUrlPath($web, $topic, "view");
-  } 
-
-  if ($item->{type} eq 'external') {
-    return $item->{url} || '';
-  }
-
-  return '';
-}
-
-sub _expandListyItem {
-  my ($this, $item) = @_;
-
-  my $title = '';
-  my $class = 'jqListyItem';
-
-  if ($item->{type} eq 'topic') {
-    $title = $item->{title} || getTopicTitle($item->{web}, $item->{topic});
-    $class .= ' jqListyItemTopic';
-    $class .= ' foswikiCurrentTopicLink' if $item->{web} && $item->{topic} && $this->{baseWeb} eq $item->{web} && $this->{baseTopic} eq $item->{topic};
-    return "<a href='\$url' class='$class'>$title</a>";
-  } 
-
-  if ($item->{type} eq 'external') {
-    $title = $item->{title}||$item->{url};
-    $class .= ' jqListyItemExternal';
-    return "<a href='\$url' class='$class'>$title</a>";
-  } 
-
-  $title = $item->{title};
-  $class .= ' jqListyItemText';
-
-  return "<span class='$class'>$title</span>";
 }
 
 =begin TML

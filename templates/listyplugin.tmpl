@@ -1,25 +1,12 @@
 %{ listy format - header}%
 %TMPL:DEF{"listy::header"}%<noautolink>
-<div class='jqListyContainer'>
-<ul class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}%' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' id="$listyId">
+<div class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}% $class' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' id="$listyId" $style>
+$topbuttons
+<ul class='jqListyContainer'>
 %TMPL:END%
 
 %{ listy format}%
 %TMPL:DEF{"listy::format"}%<li id='$name'>
-  $item $itemtools
-  <div class='foswikiGrayText'>$summary</div>
-</li>%TMPL:END%
-
-%{ listy format - footer}%
-%TMPL:DEF{"listy::footer"}%
-</ul>$buttons</div></noautolink>%TMPL:END%
-
-%{ listy tools}%
-%TMPL:DEF{"listy::item::tools"}%<!-- -->
-  <span class='jqListyItemTools'>
-    <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"pencil"}%</a> 
-    <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"bin"}%</a>
-  </span>
   <script class='jqListyData' type='application/json'> {
     "$name": {
         "type": "$type",
@@ -30,7 +17,23 @@
         "summary": "$urlEncode($summary)"
     }
   }</script>
-<!-- -->%TMPL:END%
+  $item 
+</li>%TMPL:END%
+
+%{ listy format - footer}%
+%TMPL:DEF{"listy::footer"}%
+</ul>$bottombuttons$tml</div></noautolink>%TMPL:END%
+
+%{ listy tools}%
+%TMPL:DEF{"listy::item::tools"}%<span class='jqListyItemTools'>
+  <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"pencil"}%</a> 
+  <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"bin"}%</a>
+</span>%TMPL:END%
+
+%{ listy item formats}%
+%TMPL:DEF{"listy::item::topic"}%<a href=$url class='$class'>$title</a>$tools<div class='foswikiGrayText'>$summary</div>%TMPL:END%
+%TMPL:DEF{"listy::item::external"}%<a href=$url class='$class'>$title</a>$tools</span><div class='foswikiGrayText'>$summary</div>%TMPL:END%
+%TMPL:DEF{"listy::item::text"}%<span class='$class'>$title</span>$tools</span><div class='foswikiGrayText'>$summary</div>%TMPL:END%
 
 %{ listy buttons}%
 %TMPL:DEF{"listy::buttons"}%<!-- -->
@@ -43,23 +46,23 @@
 
 %{ listy buttons - add}%
 %TMPL:DEF{"listy::buttons::add"}%<!-- -->
-  <li class='jqListyAdd'>%BUTTON{
-      "%TMPL:P{"listy::buttons::add::text"}%"
-      icon="add" 
-      class="jqButtonSimple"
-      style="float:none" 
-    }%</li>
+<li class='jqListyAdd'>%BUTTON{
+    "%TMPL:P{"listy::buttons::add::text"}%"
+    icon="add" 
+    class="jqButtonSimple"
+    style="float:none" 
+  }%</li>
 <!-- -->%TMPL:END%
 %TMPL:DEF{"listy::buttons::add::text"}%%MAKETEXT{"Add Item"}%%TMPL:END%
 
 %{ listy buttons - save}%
 %TMPL:DEF{"listy::buttons::save"}%<!-- -->
-  <li class='jqListySave'>%BUTTON{
-      "%TMPL:P{"listy::buttons::save::text"}%"
-      icon="disk" 
-      class="jqButtonSimple"
-      style="float:none";
-    }%</li>
+<li class='jqListySave'>%BUTTON{
+    "%TMPL:P{"listy::buttons::save::text"}%"
+    icon="disk" 
+    class="jqButtonSimple"
+    style="float:none";
+  }%</li>
 <!-- -->%TMPL:END%
 %TMPL:DEF{"listy::buttons::save::text"}%%MAKETEXT{"Save changes"}%%TMPL:END%
 

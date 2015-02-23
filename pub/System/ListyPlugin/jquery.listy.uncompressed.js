@@ -1,7 +1,7 @@
 /*
- * jQuery listy plugin 3.0
+ * jQuery listy plugin 3.1
  *
- * (c)opyright 2011-2014 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2015 Michael Daum http://michaeldaumconsulting.com
  *
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
@@ -98,10 +98,11 @@
     var self = this;
 
     self.id = self.elem.attr("id");
-    self.addButton = self.elem.parent().find(".jqListyAdd");
-    self.revertButton = self.elem.parent().find(".jqListyRevert");
-    self.saveButton = self.elem.parent().find(".jqListySave");
-    self.listyTml = decodeURIComponent(self.elem.parent().next().html());
+    self.addButton = self.elem.find(".jqListyAdd");
+    self.revertButton = self.elem.find(".jqListyRevert");
+    self.saveButton = self.elem.find(".jqListySave");
+    self.listyTml = decodeURIComponent(self.elem.find(".jqListyTml").html());
+    self.listyContainer = self.elem.find(".jqListyContainer");
 
     // bind internal functions to events 
     self.elem.bind("reload.listy", function() {
@@ -117,20 +118,25 @@
     });
 
     // init gui
-    self.elem.sortable({
-      connectWith: ".jqListyEditable",
-      revert: false,
+    self.listyContainer.sortable({
+      connectWith: ".jqListyEditable .jqListyContainer",
+      revert: true,
       delay: 1,
       distance: 5,
       tolerance: "pointer",
-      placeholder: "jqListyPlaceholder",
-      //forcePlaceholderSize: true,
+      placeholder: "ui-sortable-placeholder jqListyPlaceholder",
+      forcePlaceholderSize: true,
       cursor: "move",
-      cursorAt : {"top": -16, "left": -16},
+      //cursorAt : {"top": -16, "left": -16},
+      //cursorAt : {"top": 0, "left": 0},
 
       start: function(event, ui) {
+        var $item = $(ui.item),
+            $placeholder = $(ui.placeholder),
+            height = $item.height();
         //self.log("got a start in " + self.id);
-        $(ui.item).addClass("jqListySelected");
+        $placeholder.height(height);
+        $item.addClass("jqListySelected");
       },
 
       remove: function(event, ui) {
@@ -138,16 +144,16 @@
       },
 
       receive: function(event, ui) {
-        var sender = ui.sender.data("listy");
+        var sender = ui.sender.parent().data("listy");
 
         //self.log("got a receive in " + self.id);
 
         if (self.isEqual(sender)) {
 
-          sender.elem.sortable("cancel");
+          sender.listyContainer.sortable("cancel");
           sender.updateModified();
 
-          self.elem.sortable("cancel");
+          self.listyContainer.sortable("cancel");
           self.updateModified();
 
           self.showMessage("notice", "sorry, can't drop elements here");
@@ -166,7 +172,7 @@
 
       update: function(event, ui) {
         //self.log("got an update in " + self.id);
-        //self.log(self.elem.sortable("toArray"));
+        //self.log(self.listyContainer.sortable("toArray"));
         //self.log("ui=",ui);
 
         self.updateModified();
@@ -177,20 +183,20 @@
 
         //self.log("got a stop in " + self.id);
 
-        $(ui.item).removeClass("jqListySelected");
+        $item.removeClass("jqListySelected");
       }
     }).disableSelection();
 
     // remember initial sorting
-    self.initialSorting = self.elem.sortable("toArray").join(",");
+    self.initialSorting = self.listyContainer.sortable("toArray").join(",");
 
     // remember width
     self.updateWidth();
 
-    // hover behavior for list elements
-    self.elem.children("li").each(function() {
+    // process list elements
+    self.listyContainer.children("li").each(function() {
       var $item = $(this),
-        $tools = $item.find(".jqListyItemTools");
+          $tools = $item.find(".jqListyItemTools");
 
       $item.hoverIntent({
         over: function() {
@@ -225,7 +231,7 @@
     // delete button behavior
     self.elem.find(".jqListyDelete").on("click", function() {
       var $this = $(this),
-        $item = $this.parent().parent(),
+        $item = $this.parents("li:first"),
         name = $item.attr("id"),
         data = self.getItemData(name);
 
@@ -260,10 +266,8 @@
     });
 
     // edit button behavior
-    self.elem.find(".jqListyEdit").on("click", function() {
-      var $this = $(this), 
-          $item = $this.parent().parent(),
-          name = $item.attr("id"),
+    var _editHandler = function($item) {
+      var name = $item.attr("id"),
           data = self.getItemData(name);
 
       self.dialog({
@@ -317,6 +321,14 @@
       );
 
       return false;
+    };
+
+    self.elem.find(".jqListyEdit").on("click", function() {
+      var $this = $(this), $item = $this.parents("li:first");
+      _editHandler($item);
+    });
+    self.elem.find(".jqListyContainer > li").on("dblclick", function() {
+      _editHandler($(this));
     });
 
     // add button behavior
@@ -423,7 +435,7 @@
   Listy.prototype.isModified = function() {
     var self = this;
 
-    return (self.initialSorting !== self.elem.sortable("toArray").join(","));
+    return (self.initialSorting !== self.listyContainer.sortable("toArray").join(","));
   };
 
   /***************************************************************************
@@ -470,15 +482,15 @@
   Listy.prototype.reload = function(dontPropagate) {
     var self = this;
 
-    //self.log("called reload");
+    self.log("called reload");
 
     if (!self.listyTml) {
-      //self.log("hm, ... no listyTml");
+      self.log("hm, ... no listyTml");
       return;
     }
 
     if (!self.modified) {
-      //self.log("not modified");
+      self.log("not modified");
       return;
     }
 
@@ -500,8 +512,8 @@
 
         /* destroy self */
         delete allListies[self.id];
-        self.elem.parent().next(".jqListyTml").remove();
-        self.elem.parent().replaceWith(data); // SMELL
+        self.elem.find(".jqListyTml").remove();
+        self.elem.replaceWith(data); // SMELL
 
         // reload of listy collections of the same topic
         if (!dontPropagate) {
@@ -539,7 +551,7 @@
 
     //self.log("saveListy", self);
 
-    sorting = self.elem.sortable("toArray");
+    sorting = self.listyContainer.sortable("toArray");
 
     // build the save opts
     params = $.extend({
@@ -727,7 +739,7 @@
   /***************************************************************************
    * enable declarative widget instanziation
    */
-  $(".jqListyEditable:not(.jqInitedListy)").livequery(function() {
+  $(".jqListyEditable").livequery(function() {
     var $this = $(this),
       opts = $.extend({}, defaults, $this.data());
 

@@ -1,30 +1,44 @@
-.jqListy {
+.jqListyContainer {
   list-style-type:none;
   padding:0;
   margin:0;
   min-height:1.5em;
+}
+.jqListyContainer > li {
+  margin:0.5em 0;
+  position:relative;
+  display:block;
 }
 .jqListyButtons {
   list-style:none;
   margin:0.5em 0;
   padding:0;
 }
-.jqListyContainer .jqListyPlaceholder,
-.jqListyContainer .jqListyButtons li {
+.jqListy .jqListyPlaceholder,
+.jqListy .jqListyButtons li {
   background-image:none;
 }
 .jqListy .jqListyPlaceholder {
   min-height:2em;
   border:2px dashed #ddd;
   border-radius:6px;
-  margin:0.5em;
+  margin:0.5em 0;
 }
 
 .jqListyItemTools {
   display:none;
-  padding:5px 6px;
-  margin:-5px -6px -5px 0px;
   background-color:#fff;
+  position:absolute;
+  right:1px;
+  top:1px;
+  z-index:1;
+}
+.jqListyItemTools a {
+  display:inline !important;
+  text-decoration:none;
+  border:0;
+  padding:0;
+  margin:0 0 0 0.5em;
 }
 .jqListySave,
 .jqListyRevert {
@@ -33,34 +47,21 @@
 .jqListyItemTools form {
   display:inline;
 }
-.jqListyItemTools a,
-.jqListyItemTools a:hover {
+.jqListyItemTools span {
   display:inline !important;
   margin:0 5px 0 0 !important;
   padding:0px !important;
+  text-decoration:none !important;
 }
 .jqListySelected {
-  float:left;
-
-  -webkit-box-shadow: 1px 1px 7px rgba(0,0,0, 0.1) !important;
-     -moz-box-shadow: 1px 1px 7px rgba(0,0,0, 0.1) !important;
-          box-shadow: 1px 1px 7px rgba(0,0,0, 0.1) !important;
-
+  opacity:0.8;
+  background-color:#efefef;
   border-radius:6px;
-
-  opacity:0.9;
-  padding:1em !important;
-  background-color:#FFF6BF;
-  border:2px solid #FDD845 !important;
-  color:#c09853 !important;
-}
-.jqListySelected .foswikiGrayText,
-.jqListySelected .foswikiGrayText a,
-.jqListySelected .foswikiGrayText a:hover,
-.jqListySelected a,
-.jqListySelected a:hover {
-  color:#c09853 !important;
-  text-decoration:none;
+  border:0;
+  overflow:hidden;
+  -webkit-box-shadow: 1px 1px 7px rgba(0,0,0, 0.3) !important;
+     -moz-box-shadow: 1px 1px 7px rgba(0,0,0, 0.3) !important;
+          box-shadow: 1px 1px 7px rgba(0,0,0, 0.3) !important;
 }
 .jqListySelected .jqListyItemTools {
   display:none !important;
