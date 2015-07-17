@@ -1,5 +1,5 @@
 /*
- * jQuery listy plugin 3.1
+ * jQuery listy plugin 3.2
  *
  * (c)opyright 2011-2015 Michael Daum http://michaeldaumconsulting.com
  *
@@ -17,7 +17,8 @@
   var defaults = {
     //foo: "bar"
   },
-  allListies = {};
+  allListies = {},
+  saveInProgress;
 
   /***************************************************************************
     * static: find listies of collection
@@ -44,7 +45,7 @@
     self.elem = $(elem);
     self.affected = {};
     self.opts = $.extend({}, defaults, opts, self.elem.data());
-    if (typeof(self.opts.allCollections) === 'string') {
+    if (typeof self.opts.allCollections === "string") {
       self.opts.allCollections = self.opts.allCollections.split(/\s*,\s*/);
     }
     self.init();
@@ -68,8 +69,6 @@
    * calls a notification systems, defaults to pnotify
    */
   Listy.prototype.showMessage = function(type, msg, title) {
-    var self =
-
     $.pnotify({
       title: title,
       text: msg,
@@ -85,8 +84,6 @@
    * hide all open error messages in the notification system
    */
   Listy.prototype.hideMessages = function() {
-    var self = this;
-
     $.pnotify_remove_all();
   };
 
@@ -104,7 +101,7 @@
     self.listyTml = decodeURIComponent(self.elem.find(".jqListyTml").html());
     self.listyContainer = self.elem.find(".jqListyContainer");
 
-    // bind internal functions to events 
+    // bind internal functions to events
     self.elem.bind("reload.listy", function() {
       self.reload();
     });
@@ -171,11 +168,15 @@
       },
 
       update: function(event, ui) {
-        //self.log("got an update in " + self.id);
+        self.log("got an update in ", self.id);
         //self.log(self.listyContainer.sortable("toArray"));
         //self.log("ui=",ui);
 
         self.updateModified();
+        if (self.opts.autoSave) {
+          self.log("saving ",self.id);
+          self.save();
+        }
       },
 
       stop: function(event, ui) {
@@ -209,7 +210,7 @@
         out: function() {
           $tools.stop();
           $tools.css({
-            display: 'none',
+            display: "none",
             opacity: 1.0
           });
         }
@@ -247,6 +248,11 @@
       }).then(
         function(dialog) {
           $(dialog).children("form").ajaxSubmit({
+            beforeSubmit: function() {
+              if (!self.elem.data("blockUI.isBlocked")) {
+                self.elem.block({message:''});
+              }
+            },
             success: function() {
               //self.showMessage("info", "deleted item");
               self.flagModified();
@@ -254,6 +260,7 @@
             },
             error: function(xhr, textStatus) {
               var msg = $.parseJSON(xhr.responseText).error.message;
+              self.elem.unblock();
               self.showMessage("error", msg);
             }
           });
@@ -268,10 +275,14 @@
     // edit button behavior
     var _editHandler = function($item) {
       var name = $item.attr("id"),
-          data = self.getItemData(name);
+          data = self.getItemData(name),
+          url = foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
+            load: "listyplugin",
+            showcollections: self.opts.showCollections
+          });
 
       self.dialog({
-        url: foswiki.getPreference("SCRIPTURL") + "/rest/JQueryPlugin/tmpl?load=listyplugin&showcollections="+self.opts.showCollections,
+        url: url,
         name: "listy::edititem",
         data: {
           collection: self.opts.collection,
@@ -294,6 +305,11 @@
       }).then(
         function(dialog) {
           $(dialog).children("form").ajaxSubmit({
+            beforeSubmit: function() {
+              if (!self.elem.data("blockUI.isBlocked")) {
+                self.elem.block({message:''});
+              }
+            },
             success: function(json) {
               var collection = json.result.collection,
                   listies = findListiesOfCollection(collection);
@@ -312,6 +328,7 @@
             },
             error: function(xhr, textStatus) {
               var msg = $.parseJSON(xhr.responseText).error.message;
+              self.elem.unblock();
               self.showMessage("error", msg);
             }
           });
@@ -332,10 +349,30 @@
     });
 
     // add button behavior
-    self.addButton.on("click", function() {
+    self.addButton.add(self.elem.find(".jqListyAddHere")).on("click", function() {
+      var $this = $(this), 
+        $thisItem = $this.parents("li:first"),
+        $nextItem = $this.parents("li:first").next("li:first"),
+        thisIndex, nextIndex,
+        index = "";
+
+      if ($thisItem.length) {
+        thisIndex = self.getItemData($thisItem.attr("id")).index - 1
+        if ($nextItem.length) {
+          nextIndex = 
+          nextIndex = self.getItemData($nextItem.attr("id")).index - 1
+        } else {
+          nextIndex = thisIndex + 2;
+        }
+        index = (nextIndex - thisIndex) / 2 + thisIndex;
+      }
 
       self.dialog({
-        url: foswiki.getPreference("SCRIPTURL") + "/rest/JQueryPlugin/tmpl?load=listyplugin&showcollections="+self.opts.showCollections+'&types='+self.opts.itemTypes,
+        url: foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
+          load: "listyplugin",
+          showcollections: self.opts.showCollections,
+          types: self.opts.itemTypes
+        }),
         name: "listy::additem",
         data: {
           collection: self.opts.collection,
@@ -345,7 +382,8 @@
           title: "",
           web: foswiki.getPreference("WEB"),
           topic: foswiki.getPreference("TOPIC"),
-          url: ""
+          url: "",
+          index: index
         },
         methods: {
           renderCollections: function() {
@@ -445,10 +483,12 @@
     var self = this;
 
     self.modified = true;
-    self.saveButton.show();
-    self.revertButton.show();
-    self.addButton.hide();
-    self.updateWidth();
+    if (!self.opts.autoSave) {
+      self.saveButton.show();
+      self.revertButton.show();
+      self.addButton.hide();
+      self.updateWidth();
+    }
   };
 
   /***************************************************************************
@@ -497,7 +537,7 @@
     self.unflagModified();
 
     $.ajax({
-      url: foswiki.getPreference("SCRIPTURL") + "/rest/RenderPlugin/render",
+      url: foswiki.getScriptUrl("rest", "RenderPlugin", "render"),
       type: "post",
       dataType: "html",
       data: {
@@ -505,8 +545,9 @@
         text: self.listyTml
       },
       beforeSend: function() {
-        //self.hideMessages();
-        //$.modal.close();
+        if (!self.elem.data("blockUI.isBlocked")) {
+          self.elem.block({message:''});
+        }
       },
       success: function(data, textStatus, xhr) {
 
@@ -522,16 +563,17 @@
           });
           self.affected = {};
         }
-        //self.showMessage("info", "reloaded listy");
+        self.elem.unblock();
+        //self.showMessage("info", "reloaded "+self.opts.collection);
       },
       error: function(xhr, textStatus) {
         var msg;
-        //$.unblockUI();
         if (xhr.status != 404) {
           msg = $.parseJSON(xhr.responseText).error.message;
         } else {
           msg = xhr.status + " " + xhr.statusText;
         }
+        self.elem.unblock();
         self.showMessage("error", msg);
       }
     });
@@ -545,13 +587,22 @@
       sorting, params = {};
 
     if (!self.modified) {
-      //self.log("not modified");
+      self.log("not modified");
       return;
     }
 
-    //self.log("saveListy", self);
+    if (saveInProgress) {
+      return saveInProgress.done(function() {
+        saveInProgress = undefined;
+        self.save();
+      });
+    }
+
+    self.log("saveListy", self);
 
     sorting = self.listyContainer.sortable("toArray");
+
+    //self.log("sorging=",sorting);
 
     // build the save opts
     params = $.extend({
@@ -565,34 +616,41 @@
 
     //self.log("params=", params);
 
-    $.jsonRpc(foswiki.getPreference("SCRIPTURL") + "/jsonrpc", {
+    saveInProgress = $.jsonRpc(foswiki.getScriptUrl("jsonrpc"), {
       namespace: "ListyPlugin",
       method: "saveListy",
       params: params,
       beforeSend: function() {
-        //$.blockUI({message:'<h1> Saving ... </h1>'});
-        //self.hideMessages();
-        //$.modal.close();
+        if (!self.elem.data("blockUI.isBlocked")) {
+          self.elem.block({message:''});
+        }
       },
       success: function(json, textStatus, xhr) {
         // reload of listy collections of the same topic
-        //$.unblockUI();
+        var nextId = Object.keys(self.affected)[0],
+            nextListy;
 
-        $.each(self.affected, function(id, bm) {
-          if (self.isEqual(bm)) {
-            bm.reload();
-          } else {
-            bm.save();
+        if (!self.opts.autoSave) {
+          if (typeof(nextId) !== 'undefined') {
+            nextListy = self.affected[nextId];
+            delete self.affected[nextId];
           }
-        });
 
-        self.affected = {};
+          if (self.isEqual(nextListy)) {
+            nextListy.reload();
+          } else {
+            nextListy.save();
+          }
+        }
+
         self.reload(true); // dontPropagate
-        //self.showMessage("success", "saved listy in " + self.opts.source);
+        self.showMessage("success", "saved " + self.opts.collection);
+        saveInProgress = undefined;
       },
       error: function(json, textStatus, xhr) {
-        //$.unblockUI();
+        self.elem.unblock();
         self.showMessage("error", json.error.message);
+        saveInProgress = undefined;
       }
     });
   };
@@ -611,7 +669,9 @@
   Listy.prototype.dialog = function(opts) {
     var self = this,
       defaults = {
-        url: foswiki.getPreference("SCRIPTURL") + "/rest/JQueryPlugin/tmpl?load=listyplugin",
+        url: foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
+          load: "listyplugin"
+        }),
         name: undefined,
         title: "Confirmation required",
         okayText: "Ok",

@@ -1,8 +1,6 @@
 %{ listy format - header}%
-%TMPL:DEF{"listy::header"}%<noautolink>
-<div class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}% $class' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' id="$listyId" $style>
-$topbuttons
-<ul class='jqListyContainer'>
+%TMPL:DEF{"listy::header"}%<noautolink><div id="$listyId" class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}% $class' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' data-auto-save='$autosave' $style>
+$topbuttons<ul class='jqListyContainer'>
 %TMPL:END%
 
 %{ listy format}%
@@ -13,8 +11,9 @@ $topbuttons
         "web": "$web",
         "topic": "$topic",
         "url": "$url",
-        "title": "$urlEncode($title)",
-        "summary": "$urlEncode($summary)"
+        "title": "$title(encode)",
+        "summary": "$summary(encode)",
+        "index": $index
     }
   }</script>
   $item 
@@ -25,57 +24,58 @@ $topbuttons
 </ul>$bottombuttons$tml</div></noautolink>%TMPL:END%
 
 %{ listy tools}%
-%TMPL:DEF{"listy::item::tools"}%<span class='jqListyItemTools'>
+%TMPL:DEF{"listy::item::tools"}%<span class='jqListyItemTools jqUITooltip' data-theme="info" data-arrow="true" data-delay="300" data-position="top">
   <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"pencil"}%</a> 
+  <a href='#' class='jqListyAddHere' title='%MAKETEXT{"Insert a new item here"}%'>%JQICON{"page_white_add"}%</a> 
   <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"bin"}%</a>
 </span>%TMPL:END%
 
 %{ listy item formats}%
-%TMPL:DEF{"listy::item::topic"}%<a href=$url class='$class'>$title</a>$tools<div class='foswikiGrayText'>$summary</div>%TMPL:END%
-%TMPL:DEF{"listy::item::external"}%<a href=$url class='$class'>$title</a>$tools</span><div class='foswikiGrayText'>$summary</div>%TMPL:END%
-%TMPL:DEF{"listy::item::text"}%<span class='$class'>$title</span>$tools</span><div class='foswikiGrayText'>$summary</div>%TMPL:END%
+%TMPL:DEF{"listy::item::topic"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>$tools%TMPL:END%
+%TMPL:DEF{"listy::item::external"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>$tools%TMPL:END%
+%TMPL:DEF{"listy::item::text"}%<span class='$class'>$title</span><div class='foswikiGrayText'>$summary</div>$tools%TMPL:END%
 
 %{ listy buttons}%
 %TMPL:DEF{"listy::buttons"}%<!-- -->
-<ul class='jqListyButtons'>
+<ul class='jqListyButtons jqUITooltip' data-theme="info" data-arrow="true" data-delay="300" data-position="right">
 %TMPL:P{"listy::buttons::add"}%<!-- -->
-%TMPL:P{"listy::buttons::save"}%<!-- -->
-%TMPL:P{"listy::buttons::revert"}%<!-- -->
-</ul>
+%IF{"'$autosave' = 'false'"
+  then="$percntTMPL:P{\"listy::buttons::save\"}$percnt$n$percntTMPL:P{\"listy::buttons::revert\"}$percnt"
+}%</ul>
 <!-- -->%TMPL:END%
 
 %{ listy buttons - add}%
 %TMPL:DEF{"listy::buttons::add"}%<!-- -->
 <li class='jqListyAdd'>%BUTTON{
-    "%TMPL:P{"listy::buttons::add::text"}%"
+    "%MAKETEXT{"Add item"}%"
     icon="add" 
     class="jqButtonSimple"
+    title="%MAKETEXT{"Append an item to the list"}%"
     style="float:none" 
   }%</li>
 <!-- -->%TMPL:END%
-%TMPL:DEF{"listy::buttons::add::text"}%%MAKETEXT{"Add Item"}%%TMPL:END%
 
 %{ listy buttons - save}%
 %TMPL:DEF{"listy::buttons::save"}%<!-- -->
 <li class='jqListySave'>%BUTTON{
-    "%TMPL:P{"listy::buttons::save::text"}%"
+    "%MAKETEXT{"Save changes"}%"
     icon="disk" 
     class="jqButtonSimple"
+    title="%MAKETEXT{"Save sorting order"}%"
     style="float:none";
   }%</li>
 <!-- -->%TMPL:END%
-%TMPL:DEF{"listy::buttons::save::text"}%%MAKETEXT{"Save changes"}%%TMPL:END%
 
 %{ listy buttons - revert}%
 %TMPL:DEF{"listy::buttons::revert"}%<!-- -->
 <li class='jqListyRevert'>%BUTTON{
-    "%TMPL:P{"listy::buttons::revert::text"}%"
+    "%MAKETEXT{"Revert changes"}%"
     icon="cross" 
     class="jqButtonSimple"
+    title="%MAKETEXT{"Revert sorting order to its initial state"}%"
     style="float:none";
   }%</li>
 <!-- -->%TMPL:END%
-%TMPL:DEF{"listy::buttons::revert::text"}%%MAKETEXT{"Revert changes"}%%TMPL:END%
 
 %{ confirm delete dialog }%
 %TMPL:DEF{"listy::confirmdelete"}%<div class="ui-listy-dialog-content" data-title="%MAKETEXT{"Delete Item"}%">
@@ -148,6 +148,7 @@ $topbuttons
 <input type="hidden" name="type" value="{{:type}}" />
 <input type="hidden" name="topic" value="{{:source}}" />
 <input type="hidden" name="name" value="{{:name}}" />
+<input type="hidden" name="index" value="{{:index}}" />
 <div class="foswikiFormSteps">
 <!-- -->%TMPL:END%
 

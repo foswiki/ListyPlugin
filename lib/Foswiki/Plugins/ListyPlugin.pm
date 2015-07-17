@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2011 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,8 +28,8 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Contrib::JsonRpcContrib ();
 
-our $VERSION = '1.00_002';
-our $RELEASE = '1.00_002';
+our $VERSION = '1.00_003';
+our $RELEASE = '17 Jul 2015';
 our $SHORTDESCRIPTION = 'Fancy list manager';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;

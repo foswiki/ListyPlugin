@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2011-2014 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ use constant TRACE => 0; # toggle me
 
 =begin TML
 
----++ writeDebug($message(
+---++ writeDebug($message)
 
 prints a debug message to STDERR when this module is in TRACE mode
 
@@ -130,6 +130,7 @@ sub LISTY {
 
   my $theTypes = $params->{type} || 'text, topic, external';
   my %types = map {$_ => 1} split(/\s*,\s*/, $theTypes);
+  my $theAutoSave = Foswiki::Func::isTrue($params->{autosave}, 1) ? 'true':'false';
 
   #writeDebug("called LISTY ... web=$theWeb, topic=$theTopic");
 
@@ -221,10 +222,13 @@ sub LISTY {
     $line =~ s/\$index\b/$item->{index}+1/ge;
     $line =~ s/\$url\b/$url/g;
     $line =~ s/\$type\b/$item->{type}/g;
+    $line =~ s/\$title\(encode\)/_urlEncode($title)/ge;
     $line =~ s/\$title\b/$title/g;
     $line =~ s/\$topic\b/$topic/g;
     $line =~ s/\$web\b/$web/g;
+    $line =~ s/\$name\(encode\)/_urlEncode($item->{name})/ge;
     $line =~ s/\$name\b/$item->{name}/g;
+    $line =~ s/\$summary\(encode\)/_urlEncode($summary)/ge;
     $line =~ s/\$summary\b/$summary/g;
     push @results, $line;
   }
@@ -271,6 +275,7 @@ sub LISTY {
   $result =~ s/\$collection\b/$theCollection/g;
   $result =~ s/\$showcollections\b/$theShowCollections?'true':'false'/ge;
   $result =~ s/\$types\b/$theTypes/g;
+  $result =~ s/\$autosave\b/$theAutoSave/g;
   $result =~ s/\$count\b/$count/g;
   $result =~ s/\$style\b/$style/g;
   $result =~ s/\$class\b/$class/g;
@@ -311,7 +316,8 @@ HERE
   $result =~ s/\$encode\((.*?)\)/_entityEncode($1)/ges;
   $result =~ s/\$urlEncode\((.*?)\)/_urlEncode($1)/ges;
   $result =~ s/\$tml\b/$origTml/g;
-  return Foswiki::Func::decodeFormatTokens($result);
+
+  return $result;
 }
 
 sub _entityEncode {
@@ -327,6 +333,7 @@ sub _urlEncode {
   my $text = shift;
   return unless defined $text;
 
+  $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
 
   return $text;
@@ -384,7 +391,7 @@ sub jsonRpcSaveListyItem {
     unless Foswiki::Func::topicExists($this->{baseWeb}, $this->{baseTopic});
 
   throw Foswiki::Contrib::JsonRpcContrib::Error(401, "Access denied")
-    unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $this->{baseWeb}, $this->{baseTopic});
+    unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $this->{baseTopic}, $this->{baseWeb});
 
   my $collection = $request->param("collection");
   throw Foswiki::Contrib::JsonRpcContrib::Error(1000, "Unknown listy collection")
@@ -406,7 +413,7 @@ sub jsonRpcSaveListyItem {
   } else {
     # new
     $newListy->{name} = "id".int(rand(1000)).time();
-    $newListy->{index} = $this->getMaxIndex($meta, $collection);
+    $newListy->{index} = $this->getMaxIndex($meta, $collection) unless defined $newListy->{index} && $newListy->{index} ne '';
   }
 
   $meta->putKeyed($this->{metaDataName}, $newListy);
@@ -434,6 +441,7 @@ sub _getListyFromRequest {
     topic => $request->param("listyTopic"),
     type => $request->param("type"),
     url => $request->param("url"),
+    index => $request->param("index"),
   };
 
   #print STDERR "from request:".dump($item)."\n";
@@ -495,7 +503,7 @@ sub jsonRpcDeleteListyItem {
     unless Foswiki::Func::topicExists($this->{baseWeb}, $this->{baseTopic});
 
   throw Foswiki::Contrib::JsonRpcContrib::Error(401, "Access denied")
-    unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $this->{baseWeb}, $this->{baseTopic});
+    unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $this->{baseTopic}, $this->{baseWeb});
 
   my $name = $request->param("name");
   throw Foswiki::Contrib::JsonRpcContrib::Error(1001, "Unknown listy") 
@@ -531,7 +539,7 @@ sub jsonRpcSaveListy {
     unless Foswiki::Func::topicExists($this->{baseWeb}, $this->{baseTopic});
 
   throw Foswiki::Contrib::JsonRpcContrib::Error(401, "Access denied")
-    unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $this->{baseWeb}, $this->{baseTopic});
+    unless Foswiki::Func::checkAccessPermission("CHANGE", $wikiName, undef, $this->{baseTopic}, $this->{baseWeb});
 
   my ($meta) = Foswiki::Func::readTopic($this->{baseWeb}, $this->{baseTopic});
   my $sorting = $request->param("sorting");
@@ -561,14 +569,14 @@ sub jsonRpcSaveListy {
     $newListy->{index} = $index++;
     $newListy->{collection} = $collection;
 
-    writeDebug("listy name=$newListy->{name}, ".
-               "index=$newListy->{index}, ".
-               "url=".($newListy->{url}||'').", ".
-               "web=".($newListy->{web}||'').", ".
-               "topic=".($newListy->{topic}||'').", ".
-               "title=$newListy->{title}, ".
-               "summary=$newListy->{summary}, ".
-               "collection=$newListy->{collection}");
+#   writeDebug("listy name=$newListy->{name}, ".
+#              "index=$newListy->{index}, ".
+#              "url=".($newListy->{url}||'').", ".
+#              "web=".($newListy->{web}||'').", ".
+#              "topic=".($newListy->{topic}||'').", ".
+#              "title=$newListy->{title}, ".
+#              "summary=$newListy->{summary}, ".
+#              "collection=$newListy->{collection}");
 
     $seen{$newListy->{name}} = 1;
 
