@@ -340,10 +340,11 @@ sub _urlEncode {
 }
 
 sub _urlDecode {
-  my $text = shift;
+  my ($text, $doDecode) = @_;
   return unless defined $text;
 
   $text =~ s/%([\da-f]{2})/chr(hex($1))/gei;
+  $text = Encode::decode_utf8($text) if $doDecode && $Foswiki::UNICODE;
 
   return $text;
 }
@@ -426,7 +427,7 @@ sub jsonRpcSaveListyItem {
 sub _getListyFromRequest {
   my ($request, $name) = @_;
 
-  #print STDERR dump($request)."\n";
+  #print STDERR "request: ".dump($request)."\n";
 
   $name = $request->param("name") unless defined $name;
   return unless defined ($name);
@@ -444,7 +445,7 @@ sub _getListyFromRequest {
     index => $request->param("index"),
   };
 
-  #print STDERR "from request:".dump($item)."\n";
+  #print STDERR "item from request:".dump($item)."\n";
 
   return $item;
 }
@@ -457,12 +458,14 @@ sub _getListyFromJson {
 
   my $item = $request->param($name);
 
+  #print STDERR "before json:".dump($item)."\n";
+
   $item->{date} = time();
   $item->{name} = $name;
-  $item->{title} = _urlDecode($item->{title});
-  $item->{summary} = _urlDecode($item->{summary});
+  $item->{title} = _urlDecode($item->{title}, 1);
+  $item->{summary} = _urlDecode($item->{summary}, 1);
 
-  #print STDERR "from json:".dump($item)."\n";
+  #print STDERR "after json:".dump($item)."\n";
 
   return $item;
 }

@@ -1,5 +1,5 @@
 /*
- * jQuery listy plugin 3.2
+ * jQuery listy plugin 3.21
  *
  * (c)opyright 2011-2015 Michael Daum http://michaeldaumconsulting.com
  *

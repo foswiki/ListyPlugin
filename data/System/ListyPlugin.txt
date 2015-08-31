@@ -23,6 +23,7 @@
 |  Release: | %$RELEASE% |
 |  Version: | %$VERSION% |
 |  Change History: | <!-- versions below in reverse order -->&nbsp; |
+|  31 Aug 2015: | fourth beta release |
 |  17 Jul 2015: | third beta release |
 |  24 Jan 2014: | renamed from <nop>BookmarksPlugin to ListyPlugin |
 |  Dependencies: | %$DEPENDENCIES% |
