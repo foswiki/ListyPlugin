@@ -241,7 +241,7 @@
         title: "Delete Listy Item",
         data: {
           name: name,
-          title: decodeURIComponent(data.title),
+          title: data.title || data.topic || data.url,
           source: self.opts.source,
           collection: self.opts.collection
         }
@@ -289,8 +289,8 @@
           allCollections: self.opts.allCollections,
           name: name,
           source: self.opts.source,
-          summary: decodeURIComponent(data.summary),
-          title: decodeURIComponent(data.title),
+          summary: data.summary,
+          title: data.title,
           web: data.web,
           topic: data.topic,
           url: data.url,
@@ -436,7 +436,14 @@
       data = $.extend(data, $.parseJSON($(this).html()));
     });
 
-    return data[name] || {};
+    if (typeof(data[name]) === 'undefined') {
+      return {};
+    }
+    $.each(data[name], function(key, val) {
+      data[name][key] = decodeURIComponent(val);
+    });
+
+    return data[name];
   };
 
 
@@ -644,7 +651,7 @@
         }
 
         self.reload(true); // dontPropagate
-        self.showMessage("success", "saved " + self.opts.collection);
+        //self.showMessage("success", "saved into collection '" + self.opts.collection+'"');
         saveInProgress = undefined;
       },
       error: function(json, textStatus, xhr) {

@@ -14,13 +14,15 @@
 # http://www.gnu.org/copyleft/gpl.html
 
 package Foswiki::Plugins::ListyPlugin::Core;
-use Foswiki::Plugins::JQueryPlugin ();
-use Foswiki::Contrib::JsonRpcContrib::Error ();
-use Error qw(:try);
-#use Data::Dump qw(dump);
 
 use strict;
 use warnings;
+
+use Foswiki::Plugins::JQueryPlugin ();
+use Foswiki::Contrib::JsonRpcContrib::Error ();
+use Error qw(:try);
+use JSON ();
+#use Data::Dump qw(dump);
 
 =begin TML
 
@@ -120,18 +122,18 @@ sub LISTY {
   my $theCollection = $params->{_DEFAULT} || $params->{collection} || '';
   my $theHidenull = Foswiki::Func::isTrue($params->{hidenull}, 0);
   my $theTopic = $params->{topic} || $this->{baseTopic};
-  my $theWeb = $params->{web} || $this->{baseWeb};
   my $theCollections = $params->{collections};
   my $theShowCollections = Foswiki::Func::isTrue($params->{showcollections}, defined($theCollections));
-  ($theWeb, $theTopic) = Foswiki::Func::normalizeWebTopicName($theWeb, $theTopic);
+  my $theReverse = Foswiki::Func::isTrue($params->{reverse}, 0);
   my $theSort = $params->{sort};
   $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary|date)$/;
-  my $theReverse = Foswiki::Func::isTrue($params->{reverse}, 0);
 
   my $theTypes = $params->{type} || 'text, topic, external';
   my %types = map {$_ => 1} split(/\s*,\s*/, $theTypes);
   my $theAutoSave = Foswiki::Func::isTrue($params->{autosave}, 1) ? 'true':'false';
 
+  my $theWeb;
+  ($theWeb, $theTopic) = Foswiki::Func::normalizeWebTopicName($this->{baseWeb}, $theTopic);
   #writeDebug("called LISTY ... web=$theWeb, topic=$theTopic");
 
   unless (Foswiki::Func::checkAccessPermission('VIEW', $wikiName, undef, $theTopic, $theWeb)) {
@@ -222,14 +224,12 @@ sub LISTY {
     $line =~ s/\$index\b/$item->{index}+1/ge;
     $line =~ s/\$url\b/$url/g;
     $line =~ s/\$type\b/$item->{type}/g;
-    $line =~ s/\$title\(encode\)/_urlEncode($title)/ge;
     $line =~ s/\$title\b/$title/g;
     $line =~ s/\$topic\b/$topic/g;
     $line =~ s/\$web\b/$web/g;
-    $line =~ s/\$name\(encode\)/_urlEncode($item->{name})/ge;
     $line =~ s/\$name\b/$item->{name}/g;
-    $line =~ s/\$summary\(encode\)/_urlEncode($summary)/ge;
     $line =~ s/\$summary\b/$summary/g;
+    $line =~ s/\$json\b/$this->_formatAsJson($item)/ge;
     push @results, $line;
   }
 
@@ -304,8 +304,7 @@ sub LISTY {
 <script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
 HERE
 
-    $origTml = '%LISTY{'.$params->stringify.'}%';
-    $origTml =~ s/([^0-9a-zA-Z-_.:~!*'\/])/_urlEncode($1)/ge; # url encode
+    $origTml = _urlEncode('%LISTY{'.$params->stringify.'}%');
     $origTml = '<div class="jqListyTml" style="display:none">'.$origTml.'</div>';
   }
 
@@ -313,20 +312,28 @@ HERE
 <link rel="stylesheet" href="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.css" media="all" />
 HERE
 
-  $result =~ s/\$encode\((.*?)\)/_entityEncode($1)/ges;
-  $result =~ s/\$urlEncode\((.*?)\)/_urlEncode($1)/ges;
   $result =~ s/\$tml\b/$origTml/g;
 
   return $result;
 }
 
-sub _entityEncode {
-  my $text = shift;
-  return unless defined $text;
+sub json {
+  my $this = shift;
 
-  $text =~ s/([[\x01-\x09\x0b\x0c\x0e-\x1f"%&'*<=>@[_\|])/'&#'.ord($1).';'/ge;
+  unless (defined $this->{json}) {
+    $this->{json} = JSON->new->pretty(TRACE)->convert_blessed(1);
+  }
 
-  return $text;
+  return $this->{json};
+}
+
+sub _formatAsJson {
+  my ($this, $item) = @_;
+
+  return "{}" unless $item;
+
+  my %copy = map {$_ => _urlEncode($item->{$_})} keys %$item;
+  return $this->json->encode(\%copy);
 }
 
 sub _urlEncode {
@@ -339,11 +346,12 @@ sub _urlEncode {
   return $text;
 }
 
+ 
 sub _urlDecode {
   my ($text, $doDecode) = @_;
-  return unless defined $text;
+  return "" unless defined $text;
 
-  $text =~ s/%([\da-f]{2})/chr(hex($1))/gei;
+  $text =~ s/%([\da-f]{2})/chr(hex($1))/ge;
   $text = Encode::decode_utf8($text) if $doDecode && $Foswiki::UNICODE;
 
   return $text;
@@ -438,11 +446,11 @@ sub _getListyFromRequest {
     collection => _urlDecode($request->param("collection")),
     summary => _urlDecode($request->param("summary")),
     title => _urlDecode($request->param("title")),
-    web => $request->param("listyWeb"),
-    topic => $request->param("listyTopic"),
-    type => $request->param("type"),
-    url => $request->param("url"),
-    index => $request->param("index"),
+    web => _urlDecode($request->param("listyWeb")),
+    topic => _urlDecode($request->param("listyTopic")),
+    type => _urlDecode($request->param("type")),
+    url => _urlDecode($request->param("url")),
+    index => _urlDecode($request->param("index")),
   };
 
   #print STDERR "item from request:".dump($item)."\n";
@@ -460,10 +468,13 @@ sub _getListyFromJson {
 
   #print STDERR "before json:".dump($item)."\n";
 
+  foreach my $key (keys %$item) {
+    my $val = _urlDecode($item->{$key}, 1);
+    $item->{$key} = $val;
+  }
+
   $item->{date} = time();
   $item->{name} = $name;
-  $item->{title} = _urlDecode($item->{title}, 1);
-  $item->{summary} = _urlDecode($item->{summary}, 1);
 
   #print STDERR "after json:".dump($item)."\n";
 

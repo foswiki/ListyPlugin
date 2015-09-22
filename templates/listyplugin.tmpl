@@ -6,15 +6,7 @@ $topbuttons<ul class='jqListyContainer'>
 %{ listy format}%
 %TMPL:DEF{"listy::format"}%<li id='$name'>
   <script class='jqListyData' type='application/json'> {
-    "$name": {
-        "type": "$type",
-        "web": "$web",
-        "topic": "$topic",
-        "url": "$url",
-        "title": "$title(encode)",
-        "summary": "$summary(encode)",
-        "index": $index
-    }
+    "$name": $json 
   }</script>
   $item 
 </li>%TMPL:END%
