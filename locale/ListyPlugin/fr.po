@@ -5,18 +5,18 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: fr\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2016-01-13 11:08+0200\n"
-"Last-Translator: Raul F Rodriguez <raulfrodriguez10@gmail.com>\n"
-"Language-Team: French <http://translate.foswiki.org/projects/foswiki/"
-"distribution-master/fr/>\n"
+"PO-Revision-Date: 2016-02-25 14:20+0200\n"
+"Last-Translator: Michael Daum <foswiki@michaeldaumconsulting.com>\n"
+"Language-Team: French <http://translate.foswiki.org/projects/foswiki"
+"/distribution-master/fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 2.1\n"
+"X-Generator: Weblate 2.4\n"
 
 #: templates/listyplugin.tmpl:219
 msgid "Add a description for this item."
@@ -27,9 +27,8 @@ msgid "Add an item"
 msgstr ""
 
 #: templates/listyplugin.tmpl:42
-#, fuzzy
 msgid "Add item"
-msgstr "Ajouter des membres"
+msgstr ""
 
 #: templates/listyplugin.tmpl:45
 msgid "Append an item to the list"
@@ -40,51 +39,44 @@ msgid "Are you sure that you want to delete %1?"
 msgstr ""
 
 #: templates/listyplugin.tmpl:226
-#, fuzzy
 msgid "Collection"
-msgstr "Action"
+msgstr ""
 
 #: templates/listyplugin.tmpl:187
 msgid "Customize the text of this item."
 msgstr ""
 
 #: templates/listyplugin.tmpl:73
-#, fuzzy
 msgid "Delete Item"
-msgstr "Supprimer"
+msgstr ""
 
 #: templates/listyplugin.tmpl:22
-#, fuzzy
 msgid "Delete this item"
-msgstr "Supprimer la page"
+msgstr ""
 
 #: templates/listyplugin.tmpl:134 templates/listyplugin.tmpl:20
-#, fuzzy
 msgid "Edit this item"
-msgstr "Modifier ce tableau"
+msgstr ""
 
 #: templates/listyplugin.tmpl:177
 msgid "External"
 msgstr "Externe"
 
 #: templates/listyplugin.tmpl:21
-#, fuzzy
 msgid "Insert a new item here"
-msgstr "Insérer un nouveau tableau"
+msgstr ""
 
 #: templates/listyplugin.tmpl:64
-#, fuzzy
 msgid "Revert changes"
-msgstr "Pages modifiées récemment dans :"
+msgstr ""
 
 #: templates/listyplugin.tmpl:67
 msgid "Revert sorting order to its initial state"
 msgstr ""
 
 #: templates/listyplugin.tmpl:53
-#, fuzzy
 msgid "Save changes"
-msgstr "Aucun changement"
+msgstr ""
 
 #: templates/listyplugin.tmpl:56
 msgid "Save sorting order"
@@ -95,18 +87,16 @@ msgid "Select the collection to hold the item."
 msgstr ""
 
 #: templates/listyplugin.tmpl:217
-#, fuzzy
 msgid "Summary"
-msgstr "Les résumés"
+msgstr ""
 
 #: templates/listyplugin.tmpl:167
 msgid "Text"
 msgstr "Texte"
 
 #: templates/listyplugin.tmpl:185
-#, fuzzy
 msgid "Title"
-msgstr "Titre :"
+msgstr "Titre"
 
 #: templates/listyplugin.tmpl:172 templates/listyplugin.tmpl:201
 msgid "Topic"
