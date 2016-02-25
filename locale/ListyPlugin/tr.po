@@ -111,7 +111,7 @@ msgid "Topic"
 msgstr "Bu konunun bağlanacağı üst konu:"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
+msgid "URL"
 msgstr ""
 
 #: templates/listyplugin.tmpl:197

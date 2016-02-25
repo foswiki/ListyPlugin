@@ -116,7 +116,7 @@ msgid "Topic"
 msgstr "A página:"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
+msgid "URL"
 msgstr ""
 
 #: templates/listyplugin.tmpl:197

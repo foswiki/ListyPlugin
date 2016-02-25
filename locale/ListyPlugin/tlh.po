@@ -111,8 +111,8 @@ msgid "Topic"
 msgstr "ghItlh"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
-msgstr ""
+msgid "URL"
+msgstr "URL"
 
 #: templates/listyplugin.tmpl:197
 msgid "Web"
@@ -3494,9 +3494,6 @@ msgstr "mIch"
 
 #~ msgid "Try Again"
 #~ msgstr "nIDqa&&#39;"
-
-#~ msgid "URL"
-#~ msgstr "URL"
 
 #~ msgid "Unchanged sections before and after each change"
 #~ msgstr ""

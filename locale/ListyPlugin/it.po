@@ -113,8 +113,8 @@ msgid "Topic"
 msgstr "Pagina"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
-msgstr ""
+msgid "URL"
+msgstr "URL"
 
 #: templates/listyplugin.tmpl:197
 msgid "Web"
@@ -3746,9 +3746,6 @@ msgstr "Web"
 
 #~ msgid "Try Again"
 #~ msgstr "Prova ancora"
-
-#~ msgid "URL"
-#~ msgstr "URL"
 
 #~ msgid "Unchanged sections before and after each change"
 #~ msgstr "Sezioni invariate prima e dopo ogni modifica"

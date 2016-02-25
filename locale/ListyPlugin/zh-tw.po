@@ -115,8 +115,8 @@ msgid "Topic"
 msgstr "主題"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
-msgstr ""
+msgid "URL"
+msgstr "網址"
 
 #: templates/listyplugin.tmpl:197
 msgid "Web"
@@ -3462,9 +3462,6 @@ msgstr "子網"
 
 #~ msgid "Try Again"
 #~ msgstr "再試一次"
-
-#~ msgid "URL"
-#~ msgstr "網址"
 
 #~ msgid "Unchanged sections before and after each change"
 #~ msgstr "每個更改前後的不變段落"

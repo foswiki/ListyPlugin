@@ -113,8 +113,8 @@ msgid "Topic"
 msgstr "Side"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
-msgstr ""
+msgid "URL"
+msgstr "URL"
 
 #: templates/listyplugin.tmpl:197
 msgid "Web"
@@ -3672,9 +3672,6 @@ msgstr "Web"
 
 #~ msgid "Try Again"
 #~ msgstr "Forsøg igen"
-
-#~ msgid "URL"
-#~ msgstr "URL"
 
 #~ msgid "Unchanged sections before and after each change"
 #~ msgstr "Uændrede afsnit før og efter hver ændring"

@@ -111,13 +111,16 @@ msgid "Topic"
 msgstr "토픽 복사"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
-msgstr "Url"
+msgid "URL"
+msgstr ""
 
 #: templates/listyplugin.tmpl:197
 #, fuzzy
 msgid "Web"
 msgstr "%1 Web"
+
+#~ msgid "Url"
+#~ msgstr "Url"
 
 #, fuzzy
 #~ msgid "!WikiName"

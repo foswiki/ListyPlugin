@@ -98,9 +98,12 @@ msgid "Topic"
 msgstr "Topic"
 
 #: templates/listyplugin.tmpl:209
-msgid "Url"
-msgstr "Url"
+msgid "URL"
+msgstr ""
 
 #: templates/listyplugin.tmpl:197
 msgid "Web"
 msgstr "Web"
+
+#~ msgid "Url"
+#~ msgstr "Url"
