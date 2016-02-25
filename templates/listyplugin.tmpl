@@ -6,9 +6,9 @@ $topbuttons<ul class='jqListyContainer'>
 %{ listy format}%
 %TMPL:DEF{"listy::format"}%<li id='$name'>
   <script class='jqListyData' type='application/json'> {
-    "$name": $json 
+    "$name": $json
   }</script>
-  $item 
+  $item
 </li>%TMPL:END%
 
 %{ listy format - footer}%
@@ -17,9 +17,9 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{ listy tools}%
 %TMPL:DEF{"listy::item::tools"}%<span class='jqListyItemTools jqUITooltip' data-theme="info" data-arrow="true" data-delay="300" data-position="top">
-  <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"pencil"}%</a> 
-  <a href='#' class='jqListyAddHere' title='%MAKETEXT{"Insert a new item here"}%'>%JQICON{"page_white_add"}%</a> 
-  <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"bin"}%</a>
+  <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"fa-pencil"}%</a>
+  <a href='#' class='jqListyAddHere' title='%MAKETEXT{"Insert a new item here"}%'>%JQICON{"fa-plus"}%</a>
+  <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"fa-minus"}%</a>
 </span>%TMPL:END%
 
 %{ listy item formats}%
@@ -40,10 +40,10 @@ $topbuttons<ul class='jqListyContainer'>
 %TMPL:DEF{"listy::buttons::add"}%<!-- -->
 <li class='jqListyAdd'>%BUTTON{
     "%MAKETEXT{"Add item"}%"
-    icon="add" 
+    icon="fa-plus"
     class="jqButtonSimple"
     title="%MAKETEXT{"Append an item to the list"}%"
-    style="float:none" 
+    style="float:none"
   }%</li>
 <!-- -->%TMPL:END%
 
@@ -51,7 +51,7 @@ $topbuttons<ul class='jqListyContainer'>
 %TMPL:DEF{"listy::buttons::save"}%<!-- -->
 <li class='jqListySave'>%BUTTON{
     "%MAKETEXT{"Save changes"}%"
-    icon="disk" 
+    icon="fa-floppy-o"
     class="jqButtonSimple"
     title="%MAKETEXT{"Save sorting order"}%"
     style="float:none";
@@ -62,7 +62,7 @@ $topbuttons<ul class='jqListyContainer'>
 %TMPL:DEF{"listy::buttons::revert"}%<!-- -->
 <li class='jqListyRevert'>%BUTTON{
     "%MAKETEXT{"Revert changes"}%"
-    icon="cross" 
+    icon="fa-ban"
     class="jqButtonSimple"
     title="%MAKETEXT{"Revert sorting order to its initial state"}%"
     style="float:none";
@@ -81,8 +81,8 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{ listy add item dialog }%
 %TMPL:DEF{"listy::additem"}%<!-- -->
-%TMPL:P{"listy::editor::start" 
-  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+%TMPL:P{"listy::editor::start"
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem"
   title="%TMPL:P{"listy::additem::titletext"}%"
 }%<!-- -->
 %TMPL:P{"listy::editor::typestep"}%<!-- -->
@@ -95,8 +95,8 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{listy edit item dialog - text }%
 %TMPL:DEF{"listy::edititem::text"}%<!-- -->
-%TMPL:P{"listy::editor::start" 
-  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+%TMPL:P{"listy::editor::start"
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem"
   title="%TMPL:P{"listy::edititem::titletext"}%"
 }%<!-- -->
 %TMPL:P{"listy::editor::titlestep"}%<!-- -->
@@ -107,8 +107,8 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{listy edit item dialog - topic }%
 %TMPL:DEF{"listy::edititem::topic"}%<!-- -->
-%TMPL:P{"listy::editor::start" 
-  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+%TMPL:P{"listy::editor::start"
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem"
   title="%TMPL:P{"listy::edititem::titletext"}%"
 }%<!-- -->
 %TMPL:P{"listy::editor::topicstep"}%<!-- -->
@@ -120,8 +120,8 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{listy edit item dialog - external }%
 %TMPL:DEF{"listy::edititem::external"}%<!-- -->
-%TMPL:P{"listy::editor::start" 
-  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem" 
+%TMPL:P{"listy::editor::start"
+  action="%SCRIPTURL{"jsonrpc"}%/ListyPlugin/saveListyItem"
   title="%TMPL:P{"listy::edititem::titletext"}%"
 }%<!-- -->
 %TMPL:P{"listy::editor::externalstep"}%<!-- -->
@@ -153,7 +153,7 @@ $topbuttons<ul class='jqListyContainer'>
 %{listy editor - type tabpane }%
 %TMPL:DEF{"listy::editor::typestep"}%<!-- -->
 <div class="jqListyType foswikiFormStep">
-%FORMATLIST{"%URLPARAM{"types"}%" 
+%FORMATLIST{"%URLPARAM{"types"}%"
   split="\s*,\s*"
   header="$percntTABPANE{class=\"plain\" animate=\"on\"}$percnt"
   format="$percntTMPL:P{\"listy::editor::typestep::$1\"}$percnt"
@@ -184,7 +184,7 @@ $topbuttons<ul class='jqListyContainer'>
 <div class="foswikiFormStep">
   <h3>%MAKETEXT{"Title"}%:</h3>
   <input type="text" size="40" name="title" class="foswikiInputField" value="{{:title}}" />
-  <div class="foswikiFormDescription">%MAKETEXT{"Customize the text of your item."}%</div>
+  <div class="foswikiFormDescription">%MAKETEXT{"Customize the text of this item."}%</div>
 </div>
 <!-- -->%TMPL:END%
 

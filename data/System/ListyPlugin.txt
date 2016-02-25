@@ -1,6 +1,6 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1442921713" format="1.1"  version="1"}%
+%META:TOPICINFO{author="micha" comment="reprev" date="1443685357" format="1.1" reprev="10" version="10"}%
 ---+!! %TOPIC%
-%$SHORTDESCRIPTION%
+%FORMFIELD{"Description"}%
 
 %TOC%
 
@@ -45,9 +45,7 @@ To store "My Links" of the currently logged in user, use:
 
 This will store the set of links organized by this widget into the user's profile page and have them in a "mylinks" collection.
 
----+++ Kanban-ish
-To create a simple three-state task manager use this:
-
+---+++ Scrum Board
 (with the help of [[Foswiki:Extensions/GridLayoutPlugin][GridLayoutPlugin]])
 
 <verbatim class="tml">
@@ -163,7 +161,6 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 | =$tml= | url-escaped TML used to render this listy; this is used to re-render the widget after an update |
 
 ---++ Installation Instructions
-
 %$INSTALL_INSTRUCTIONS%
 
 ---++ Dependencies
@@ -181,6 +178,7 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 %META:FIELD{name="Author" title="Author" value="Michael Daum"}%
 %META:FIELD{name="Version" title="Version" value="%25$VERSION%25"}%
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
+%META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ListyPlugin"}%
 %META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015 Michael Daum http://michaeldaumconsulting.com"}%
 %META:FIELD{name="License" title="License" value="[[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]]"}%

@@ -28,8 +28,8 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Contrib::JsonRpcContrib ();
 
-our $VERSION = '1.00';
-our $RELEASE = '22 Sep 2015';
+our $VERSION = '1.10';
+our $RELEASE = '25 Jan 2016';
 our $SHORTDESCRIPTION = 'Fancy list manager';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;

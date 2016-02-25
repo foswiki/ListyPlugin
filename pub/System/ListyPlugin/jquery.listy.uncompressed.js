@@ -21,6 +21,17 @@
   saveInProgress;
 
   /***************************************************************************
+   * static tools
+   */
+  function entityDecode(value) {
+    return $("<div/>").html(value).text();
+  }
+
+  function entityEncode(value) {
+    return $('<div/>').text(value).html();
+  } 
+
+  /***************************************************************************
     * static: find listies of collection
     */
   function findListiesOfCollection(id) {
@@ -98,7 +109,7 @@
     self.addButton = self.elem.find(".jqListyAdd");
     self.revertButton = self.elem.find(".jqListyRevert");
     self.saveButton = self.elem.find(".jqListySave");
-    self.listyTml = decodeURIComponent(self.elem.find(".jqListyTml").html());
+    self.listyTml = entityDecode(self.elem.find(".jqListyTml").html());
     self.listyContainer = self.elem.find(".jqListyContainer");
 
     // bind internal functions to events
@@ -153,7 +164,7 @@
           self.listyContainer.sortable("cancel");
           self.updateModified();
 
-          self.showMessage("notice", "sorry, can't drop elements here");
+          self.showMessage("notice", $.i18n("sorry, can't drop elements here"));
           return;
         }
 
@@ -238,7 +249,7 @@
 
       self.dialog({
         name: "listy::confirmdelete",
-        title: "Delete Listy Item",
+        title: $.i18n("Delete Listy Item"),
         data: {
           name: name,
           title: data.title || data.topic || data.url,
@@ -439,9 +450,13 @@
     if (typeof(data[name]) === 'undefined') {
       return {};
     }
+/*
     $.each(data[name], function(key, val) {
-      data[name][key] = decodeURIComponent(val);
+      data[name][key] = decodeURIComponent(val).replace(/["&<>]/g, function(i) {
+        return '&#' + i.charCodeAt(0) + ';';
+      });
     });
+*/
 
     return data[name];
   };
@@ -680,10 +695,10 @@
           load: "listyplugin"
         }),
         name: undefined,
-        title: "Confirmation required",
-        okayText: "Ok",
+        title: $.i18n("Confirmation required"),
+        okayText: $.i18n("OK"),
         okayIcon: "ui-icon-check",
-        cancelText: "Cancel",
+        cancelText: $.i18n("Cancel"),
         cancelIcon: "ui-icon-cancel",
         width: 'auto',
         modal: true,

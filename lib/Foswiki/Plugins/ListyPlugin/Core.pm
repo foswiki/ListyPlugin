@@ -292,6 +292,7 @@ sub LISTY {
   # only add the gui if we are allowed to make changes
   my $origTml = '';
   if ($allowChange) {
+    Foswiki::Plugins::JQueryPlugin::createPlugin("i18n");
     Foswiki::Plugins::JQueryPlugin::createPlugin("ui");
     Foswiki::Plugins::JQueryPlugin::createPlugin("hoverIntent");
     Foswiki::Plugins::JQueryPlugin::createPlugin("jsonrpc");
@@ -300,17 +301,28 @@ sub LISTY {
     Foswiki::Plugins::JQueryPlugin::createPlugin("blockui");
     Foswiki::Plugins::JQueryPlugin::createPlugin("tabpane");
     Foswiki::Plugins::JQueryPlugin::createPlugin("render");
-    Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::RENDER");
+    Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::RENDER, JQUERYPLUGIN::I18N");
 <script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
 HERE
 
-    $origTml = _urlEncode('%LISTY{'.$params->stringify.'}%');
+    $origTml = _entityEncode('%LISTY{'.$params->stringify.'}%');
     $origTml = '<div class="jqListyTml" style="display:none">'.$origTml.'</div>';
   }
 
   Foswiki::Func::addToZone("head", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::UI");
 <link rel="stylesheet" href="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.css" media="all" />
 HERE
+
+  # open matching localization file if it exists
+  my $langTag = $this->{session}->i18n->language();
+
+  my $messagePath = $Foswiki::cfg{SystemWebName} .'/ListyPlugin/i18n/' . $langTag . '.js';
+  my $messageFile = $Foswiki::cfg{PubDir} . '/' . $messagePath;
+  if (-f $messageFile) {
+      Foswiki::Func::addToZone('script', "LISTYPLUGIN::I8N", <<"HERE", 'JQUERYPLUGIN::I18N');
+<script type='application/l10n' data-i18n-language='$langTag' data-i18n-namespace='LISTY' src='$Foswiki::cfg{PubUrlPath}/$messagePath'></script>
+HERE
+  }
 
   $result =~ s/\$tml\b/$origTml/g;
 
@@ -332,30 +344,50 @@ sub _formatAsJson {
 
   return "{}" unless $item;
 
-  my %copy = map {$_ => _urlEncode($item->{$_})} keys %$item;
+  my %copy = map {$_ => _entityEncode($item->{$_})} keys %$item;
   return $this->json->encode(\%copy);
 }
 
-sub _urlEncode {
+sub _entityEncode {
   my $text = shift;
-  return unless defined $text;
 
-  $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
-  $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
+  if (defined $text) {
+    $text =~ s/([[\x01-\x09\x0b\x0c\x0e-\x1f"%&\$'*<=>@\]_\|])/'&#'.ord($1).';'/ge;
+  }
 
   return $text;
 }
+
+sub _entityDecode {
+  my $text = shift;
+
+  if (defined $text) {
+    $text =~ s/&#(\d+);/chr($1)/ge;
+  }
+
+  return $text;
+}
+
+# sub _urlEncode {
+#   my $text = shift;
+#   return unless defined $text;
+#
+#   $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
+#   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
+#
+#   return $text;
+# }
 
  
-sub _urlDecode {
-  my ($text, $doDecode) = @_;
-  return "" unless defined $text;
-
-  $text =~ s/%([\da-f]{2})/chr(hex($1))/ge;
-  $text = Encode::decode_utf8($text) if $doDecode && $Foswiki::UNICODE;
-
-  return $text;
-}
+# sub _urlDecode {
+#   my ($text, $doDecode) = @_;
+#   return "" unless defined $text;
+#
+#   $text =~ s/%([\da-f]{2})/chr(hex($1))/ge;
+#   $text = Encode::decode_utf8($text) if $doDecode && $Foswiki::UNICODE;
+#
+#   return $text;
+# }
 
 =begin TML
 
@@ -443,14 +475,14 @@ sub _getListyFromRequest {
   my $item = {
     date => time(),
     name => $name,
-    collection => _urlDecode($request->param("collection")),
-    summary => _urlDecode($request->param("summary")),
-    title => _urlDecode($request->param("title")),
-    web => _urlDecode($request->param("listyWeb")),
-    topic => _urlDecode($request->param("listyTopic")),
-    type => _urlDecode($request->param("type")),
-    url => _urlDecode($request->param("url")),
-    index => _urlDecode($request->param("index")),
+    collection => _entityDecode($request->param("collection")),
+    summary => _entityDecode($request->param("summary")),
+    title => _entityDecode($request->param("title")),
+    web => _entityDecode($request->param("listyWeb")),
+    topic => _entityDecode($request->param("listyTopic")),
+    type => _entityDecode($request->param("type")),
+    url => _entityDecode($request->param("url")),
+    index => _entityDecode($request->param("index")),
   };
 
   #print STDERR "item from request:".dump($item)."\n";
@@ -469,7 +501,7 @@ sub _getListyFromJson {
   #print STDERR "before json:".dump($item)."\n";
 
   foreach my $key (keys %$item) {
-    my $val = _urlDecode($item->{$key}, 1);
+    my $val = _entityDecode($item->{$key}, 1);
     $item->{$key} = $val;
   }
 
