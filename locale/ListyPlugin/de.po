@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: ListyPlugin $Id\n"
 "Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2016-02-25 14:10+0200\n"
+"PO-Revision-Date: 2016-02-25 14:14+0200\n"
 "Last-Translator: Michael Daum <foswiki@michaeldaumconsulting.com>\n"
 "Language-Team: Foswiki German Translation Team <none>\n"
 "Language: de\n"
@@ -100,7 +100,7 @@ msgstr "Topic"
 
 #: templates/listyplugin.tmpl:209
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: templates/listyplugin.tmpl:197
 msgid "Web"
