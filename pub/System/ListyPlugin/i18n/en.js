@@ -1,7 +1,7 @@
 {
-  "sorry, can't drop elements here": "sorry, can't drop elements here",
-  "Delete Listy Item": "Delete Listy Item",
-  "Confirmation required": "Confirmation required",
-  "OK": "OK",
-  "Cancel": "Cancel"
+    "Cancel": "Cancel"
+    "Confirmation required": "Confirmation required",
+    "Delete Listy Item": "Delete Listy Item",
+    "OK": "OK",
+    "sorry, can't drop elements here": "sorry, can't drop elements here",
 }
