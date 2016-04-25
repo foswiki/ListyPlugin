@@ -1,7 +1,7 @@
 {
-    "Cancel": "Cancel",
-    "Confirmation required": "Confirmation required",
-    "Delete Listy Item": "Delete Listy Item",
-    "OK": "OK",
-    "sorry, can't drop elements here": "sorry, can't drop elements here"
+    "Cancel": "Annulla", 
+    "Confirmation required": "Richiesta di conferma", 
+    "Delete Listy Item": "Elimina Voce in Elenco", 
+    "OK": "OK", 
+    "sorry, can't drop elements here": "mi dispiace, qui non si possono eliminare degli elementi"
 }
