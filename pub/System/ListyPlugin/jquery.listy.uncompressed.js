@@ -1,21 +1,21 @@
 /*
- * jQuery listy plugin 3.21
+ * jQuery listy plugin 4.00
  *
- * (c)opyright 2011-2015 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2017 Michael Daum http://michaeldaumconsulting.com
  *
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
  */
-(function($) {
 "use strict";
+(function($) {
 
   /***************************************************************************
    * globals
    */
   var defaults = {
-    //foo: "bar"
+    debug: false
   },
   allListies = {},
   saveInProgress;
@@ -69,11 +69,13 @@
    * logging
    */
   Listy.prototype.log = function() {
-    var self = this,
-      args = $.makeArray(arguments);
+    var self = this, args;
 
-    args.unshift("LISTY: ");
-    $.log.apply(self, args);
+    if (typeof(console) !== 'undefined' && self.opts.debug) {
+      args = $.makeArray(arguments);
+      args.unshift("LISTY: ");
+      console.log.apply(self, args);
+    }
   };
 
   /*************************************************************************
@@ -105,6 +107,7 @@
   Listy.prototype.init = function() {
     var self = this;
 
+    // attach to dom
     self.id = self.elem.attr("id");
     self.addButton = self.elem.find(".jqListyAdd");
     self.revertButton = self.elem.find(".jqListyRevert");
@@ -142,7 +145,7 @@
         var $item = $(ui.item),
             $placeholder = $(ui.placeholder),
             height = $item.height();
-        //self.log("got a start in " + self.id);
+        self.log("got a start in ", self.id);
         $placeholder.height(height);
         $item.addClass("jqListySelected");
       },
@@ -154,7 +157,7 @@
       receive: function(event, ui) {
         var sender = ui.sender.parent().data("listy");
 
-        //self.log("got a receive in " + self.id);
+        self.log("got a receive in ", self.id);
 
         if (self.isEqual(sender)) {
 
@@ -168,7 +171,6 @@
           return;
         }
 
-
         // add remember the other editor
         self.affected[sender.id] = sender;
 
@@ -179,21 +181,44 @@
       },
 
       update: function(event, ui) {
-        self.log("got an update in ", self.id);
+        var sender = ui.sender
+
+        if (sender) {
+          sender = sender.parent().data("listy");
+          self.log("got an update to ", self.id,"from ",sender.id);
+        } else {
+          self.log("got an update to ", self.id);
+        }
+
         //self.log(self.listyContainer.sortable("toArray"));
         //self.log("ui=",ui);
 
         self.updateModified();
         if (self.opts.autoSave) {
-          self.log("saving ",self.id);
-          self.save();
+          //self.log("saving ",self.id);
+          self.save().then(function() {
+            var data, md5, senderMd5;
+            if (sender) {
+              // check whether we need to reload this listy
+              data = self.getItemData(ui.item.attr("id"));
+              self.log("save initiated by sender ...",sender.id);
+              md5 = self.elem.data("formatterMd5")[data.type];
+              senderMd5 = sender.elem.data("formatterMd5")[data.type];
+              if (md5 !== senderMd5) {
+                self.log("need to reload",self.id);
+                self.reload(true);
+              } else {
+                self.log("no need to reload a listy ... same formatter");
+              }
+            }
+          });
         }
       },
 
       stop: function(event, ui) {
         var $item = $(ui.item);
 
-        //self.log("got a stop in " + self.id);
+        //self.log("got a stop in ", self.id);
 
         $item.removeClass("jqListySelected");
       }
@@ -206,9 +231,10 @@
     self.updateWidth();
 
     // process list elements
+    var $toolsTemplate = self.elem.find(".jqListyItemTools");
     self.listyContainer.children("li").each(function() {
       var $item = $(this),
-          $tools = $item.find(".jqListyItemTools");
+          $tools = $toolsTemplate.clone().appendTo($item);
 
       $item.hoverIntent({
         over: function() {
@@ -544,21 +570,28 @@
   Listy.prototype.reload = function(dontPropagate) {
     var self = this;
 
-    self.log("called reload");
+    if (saveInProgress) {
+      //self.log("there is a save in progress ... waiting for it to finish");
+      return saveInProgress.done(function() {
+        return self.reload(dontPropagate);
+      });
+    }
+
+    self.log("reloading ",self.id,"dontPropagate=",dontPropagate);
 
     if (!self.listyTml) {
       self.log("hm, ... no listyTml");
-      return;
+      return $.Deferred().resolve().promise();
     }
 
     if (!self.modified) {
       self.log("not modified");
-      return;
+      return $.Deferred().resolve().promise();
     }
 
     self.unflagModified();
 
-    $.ajax({
+    return $.ajax({
       url: foswiki.getScriptUrl("rest", "RenderPlugin", "render"),
       type: "post",
       dataType: "html",
@@ -585,7 +618,6 @@
           });
           self.affected = {};
         }
-        self.elem.unblock();
         //self.showMessage("info", "reloaded "+self.opts.collection);
       },
       error: function(xhr, textStatus) {
@@ -595,7 +627,6 @@
         } else {
           msg = xhr.status + " " + xhr.statusText;
         }
-        self.elem.unblock();
         self.showMessage("error", msg);
       }
     });
@@ -610,17 +641,17 @@
 
     if (!self.modified) {
       self.log("not modified");
-      return;
+      return $.Deferred().resolve().promise();
     }
 
     if (saveInProgress) {
       return saveInProgress.done(function() {
         saveInProgress = undefined;
-        self.save();
+        return self.save();
       });
     }
 
-    self.log("saveListy", self);
+    self.log("saveListy", self.id);
 
     sorting = self.listyContainer.sortable("toArray");
 
@@ -638,15 +669,17 @@
 
     //self.log("params=", params);
 
-    saveInProgress = $.jsonRpc(foswiki.getScriptUrl("jsonrpc"), {
+    return saveInProgress = $.jsonRpc(foswiki.getScriptUrl("jsonrpc"), {
       namespace: "ListyPlugin",
       method: "saveListy",
       params: params,
       beforeSend: function() {
+/*
         if (!self.elem.data("blockUI.isBlocked")) {
           self.elem.block({message:''});
         }
-      },
+*/
+     },
       success: function(json, textStatus, xhr) {
         // reload of listy collections of the same topic
         var nextId = Object.keys(self.affected)[0],
@@ -665,7 +698,7 @@
           }
         }
 
-        self.reload(true); // dontPropagate
+        //self.reload(true); // dontPropagate
         //self.showMessage("success", "saved into collection '" + self.opts.collection+'"');
         saveInProgress = undefined;
       },
@@ -745,9 +778,7 @@
         $(template.render(opts.data, opts.methods)).dialog({
           buttons: [{
             text: opts.okayText,
-            icons: {
-              primary: opts.okayIcon
-            },
+            icon: opts.okayIcon,
             click: function() {
               $(this).dialog("close");
               dfd.resolve(this);
@@ -755,9 +786,7 @@
             }
           }, {
             text: opts.cancelText,
-            icons: {
-              primary: opts.cancelIcon
-            },
+            icon: opts.cancelIcon,
             click: function() {
               $(this).dialog("close");
               dfd.reject();

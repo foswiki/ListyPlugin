@@ -113,6 +113,8 @@ renders each topic in a listy by displaying an image and part of its [[%SYSTEMWE
 | =topic= | | =%<nop>BASETOPIC%= |
 | =collection= | the collection ID, can be just any string; leave it empty to refer to the "default" collection | =&lt;empty>= |
 | =collections= | list of known collections stored at =topic=; this lets you move a listy item between collectiosn without having a drag'n drop | |
+| =collection_formfield= | name of a formfield to be altered when dragging topic listies among collections | |
+| =collection_value= | value to set a topic item's formfield to | collection |
 | =hidenull= | boolean flag to hide the listy when there are no items in it | =false= |
 | =showcollections= | boolean flag to show/hide the collections select box in the item editor | =true= |
 | =sort= | sort listies using the specified property; possible values are =index=, =title=, =summary=, =date= | =index= |
@@ -120,25 +122,26 @@ renders each topic in a listy by displaying an image and part of its [[%SYSTEMWE
 | =types= | specify types of listy items, possible values are =topic=, =text=, =external= | =topic, text, external= |
 | =autosave= | boolean flag to enable/disable saving changes automatically on every action; if switched off you will need to hit the "save" button to make any changes to the listy permanent; if switched on (default) any change will be stored immediately | =true= |
 | =format=, =topic_format=, =text_format=, =external_format= | format string of listy items; there are a number of variables to be used in the format (see below) | defined in =listyplugin.tmpl= |
-| =buttons= | specify where the UI buttons are located; possible values are =top=, =bottom=, =both= | =bottom= |
+| =buttons= | specify where the UI buttons are located; possible values are =top=, =bottom=, =both= and =off= | =bottom= |
 | =width= | width of listy widget, e.g. =width="500px" | |
 | =class= | additional css class to be added to the listy widget | |
+| =query= | search query for topics to pre-fill a listy with items; this is either a normal [[%SYSTEMWEB%.QuerySearch][QuerySearch]] or a query using Foswiki:Extensions/DBCachePlugin in case it is installed | |
 
 The parameters =format=, =topic_format=, =text_format=, =external_format= may use the following variables:
 
 | *Name* | *Description* |
-| =$tools= | expands to the tools to interact with a listy item |
 | =$class= | css class of a listy item |
 | =$date= | date when the listy item was last changed |
 | =$index= | index of listy item within collection |
-| =$url= | link url of listy item |
-| =$type= | type of this item ("topic", "text" or "external") |
-| =$title= | title text of listy item |
-| =$topic= | topic value of a "topic" listy item |
-| =$web= | web value of a "topic" listy item | 
+| =$json= | listy item as a json object; this is used by the widget to interact with the backend |
 | =$name= | name/id of this listy item |
 | =$summary= | summary |
-| =$json= | listy item as a json object; this is used by the widget to interact with the backend |
+| =$title= | title text of listy item |
+| =$tools= | expands to the tools to interact with a listy item |
+| =$topic= | topic value of a "topic" listy item |
+| =$type= | type of this item ("topic", "text" or "external") |
+| =$url= | link url of listy item |
+| =$web= | web value of a "topic" listy item | 
 
 There are a couple of additional variables that are used in the =listyplugin.tmpl= default strings:
 
@@ -150,6 +153,8 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 | =$sourceweb= | |
 | =$sourcetopic= | |
 | =$collection= | collection id |
+| =$collectionformfield= | name of formfield managed by this listy |
+| =$collectionvalue= | value set to a collection formfield if this listy receives a new item using drag& drop |
 | =$showcollections= | true/false |
 | =$types= | selected types of this listy |
 | =$autosave= | true/false |
@@ -169,6 +174,8 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  23 Jan 2017: | new features: populate listies using a search query; \
+                  change formfields of a topic behind a listy item drag&droping them between listies | 
 |  22 Sep 2015: | first final relase |
 |  31 Aug 2015: | fourth beta release |
 |  17 Jul 2015: | third beta release |
@@ -180,7 +187,7 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ListyPlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015 Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2017 Michael Daum http://michaeldaumconsulting.com"}%
 %META:FIELD{name="License" title="License" value="[[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]]"}%
-%META:FIELD{name="Home" title="Home" value="http://foswiki.org/Extensions/ListyPlugin"}%
+%META:FIELD{name="Home" title="Home" value="https://foswiki.org/Extensions/ListyPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/ListyPlugin"}%

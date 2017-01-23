@@ -1,5 +1,5 @@
 %{ listy format - header}%
-%TMPL:DEF{"listy::header"}%<noautolink><div id="$listyId" class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}% $class' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' data-auto-save='$autosave' $style>
+%TMPL:DEF{"listy::header"}%<noautolink><div id="$listyId" class='jqListy %IF{"'$sourceweb.$sourcetopic' allows 'change'" then="jqListyEditable"}% $class' data-source='$sourceweb.$sourcetopic' data-collection='$collection' data-all-collections='$allcollections' data-show-collections='$showcollections' data-item-types='$types' data-auto-save='$autosave' data-collection-formfield='$collectionformfield' data-collection-value='$collectionvalue' $html5data $style>
 $topbuttons<ul class='jqListyContainer'>
 %TMPL:END%
 
@@ -13,7 +13,7 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{ listy format - footer}%
 %TMPL:DEF{"listy::footer"}%
-</ul>$bottombuttons$tml</div></noautolink>%TMPL:END%
+</ul>$bottombuttons$tml$tools</div></noautolink>%TMPL:END%
 
 %{ listy tools}%
 %TMPL:DEF{"listy::item::tools"}%<span class='jqListyItemTools jqUITooltip' data-theme="info" data-arrow="true" data-delay="300" data-position="top">
@@ -23,9 +23,10 @@ $topbuttons<ul class='jqListyContainer'>
 </span>%TMPL:END%
 
 %{ listy item formats}%
-%TMPL:DEF{"listy::item::topic"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>$tools%TMPL:END%
-%TMPL:DEF{"listy::item::external"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>$tools%TMPL:END%
-%TMPL:DEF{"listy::item::text"}%<span class='$class'>$title</span><div class='foswikiGrayText'>$summary</div>$tools%TMPL:END%
+%TMPL:DEF{"listy::item::topic"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>%TMPL:END%
+%TMPL:DEF{"listy::item::query"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>%TMPL:END%
+%TMPL:DEF{"listy::item::external"}%<a href='$url' class='$class'>$title</a><div class='foswikiGrayText'>$summary</div>%TMPL:END%
+%TMPL:DEF{"listy::item::text"}%<span class='$class'>$title</span><div class='foswikiGrayText'>$summary</div>%TMPL:END%
 
 %{ listy buttons}%
 %TMPL:DEF{"listy::buttons"}%<!-- -->

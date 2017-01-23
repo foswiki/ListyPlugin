@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2017 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,19 +18,19 @@ package Foswiki::Plugins::ListyPlugin::Core;
 use strict;
 use warnings;
 
-use Foswiki::Plugins::JQueryPlugin ();
-use Foswiki::Contrib::JsonRpcContrib::Error ();
-use Error qw(:try);
-use JSON ();
-#use Data::Dump qw(dump);
-
 =begin TML
 
 ---+ package ListyPlugin::Core
 
 =cut
 
+use Foswiki::Plugins::JQueryPlugin ();
+use Foswiki::Contrib::JsonRpcContrib::Error ();
 use Foswiki::Func ();
+use Error qw(:try);
+use JSON ();
+use Digest::MD5 qw(md5_hex);
+#use Data::Dump qw(dump);
 
 use constant TRACE => 0; # toggle me
 
@@ -43,7 +43,9 @@ prints a debug message to STDERR when this module is in TRACE mode
 =cut
 
 sub writeDebug {
-  Foswiki::Func::writeDebug("ListyPlugin::Core - $_[0]") if TRACE;
+  return unless TRACE;
+  #Foswiki::Func::writeDebug("ListyPlugin::Core - $_[0]");
+  print STDERR "ListyPlugin::Core - $_[0]\n";
 }
 
 =begin TML
@@ -84,6 +86,7 @@ sub new {
   $this->{itemFormat}{topic} = Foswiki::Func::expandTemplate("listy::item::topic") || '';
   $this->{itemFormat}{external} = Foswiki::Func::expandTemplate("listy::item::external") || '';
   $this->{itemFormat}{text} = Foswiki::Func::expandTemplate("listy::item::text") || '';
+  $this->{itemFormat}{query} = Foswiki::Func::expandTemplate("listy::item::query") || '';
 
   return $this->init($session);
 }
@@ -124,11 +127,14 @@ sub LISTY {
   my $theTopic = $params->{topic} || $this->{baseTopic};
   my $theCollections = $params->{collections};
   my $theShowCollections = Foswiki::Func::isTrue($params->{showcollections}, defined($theCollections));
+  my $theCollectionFormfield = $params->{collection_formfield} || '';
+  my $theCollectionValue = $params->{collection_value} || $theCollection;
   my $theReverse = Foswiki::Func::isTrue($params->{reverse}, 0);
   my $theSort = $params->{sort};
   $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary|date)$/;
 
-  my $theTypes = $params->{type} || 'text, topic, external';
+  my $theTypes = $params->{type} || $params->{types} ||'text, topic, external';
+
   my %types = map {$_ => 1} split(/\s*,\s*/, $theTypes);
   my $theAutoSave = Foswiki::Func::isTrue($params->{autosave}, 1) ? 'true':'false';
 
@@ -141,7 +147,31 @@ sub LISTY {
     return ''; # better be silent instead of clutterish
   }
 
-  my @listyItems = $this->getListyItems($theWeb, $theTopic);
+  my @listyItems = ();
+
+  my $theQuery = $params->{query};
+  if ($theQuery) {
+
+    $types{query} = 1; # add query type
+
+    # get listies by converting a topic search result to appropriate structures
+    if (Foswiki::Func::getContext()->{DBCachePluginEnabled}) {
+      @listyItems = $this->getListyItemsByDBQuery($theWeb, $theTopic, $theQuery);
+    } else {
+      @listyItems = $this->getListyItemsByQuery($theWeb, $theTopic, $theQuery);
+    }
+
+    # set collection explicitly
+    foreach my $item (@listyItems) {
+      $item->{collection} = $theCollection;
+    }
+
+    @listyItems = $this->syncQueryListy($theWeb, $theTopic, $theCollection, \@listyItems);
+
+    #print STDERR "listyItems=".dump(\@listyItems)."\n";
+  } else {
+    @listyItems = $this->getListyItems($theWeb, $theTopic);
+  }
 
   my %allCollections = ();
   $allCollections{$_->{collection}||''} = 1 foreach @listyItems;
@@ -157,10 +187,9 @@ sub LISTY {
   } else {
     @listyItems = sort {lc($a->{$theSort}||$a->{topic}||$a->{url}||$a->{title}) cmp lc($b->{$theSort}||$b->{topic})||$b->{url}||$b->{title}} @listyItems;
   }
-
   @listyItems = reverse @listyItems if $theReverse;
 
-  writeDebug("listy ($theSort): ".join(',', map {$_->{title}} @listyItems));
+  #print STDERR "listy ($theSort, $theCollection): ".join(',', map {"title=$_->{title}, index=$_->{index}"} @listyItems)."\n";
 
   my $allowChange = (Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $theTopic, $theWeb));
   my $itemTools = $allowChange?$this->{itemTools}:'';
@@ -180,7 +209,7 @@ sub LISTY {
       next;
     }
 
-    unless ($item->{type} =~ /^(text|topic|external)$/) {
+    unless ($item->{type} =~ /^(text|topic|external|query)$/) {
       print STDERR "WARNING: mal-formed listy: unknown type '$item->{type}' in item $item->{name} $theWeb.$theTopic, collection=$collection\n";
       next;
     }
@@ -203,22 +232,22 @@ sub LISTY {
       $title = $item->{title}||$item->{url};
       $class .= ' jqListyItemExternal';
       $url = $item->{url} || '';
+    } elsif ($item->{type} eq 'query') {
+      $title = $item->{title} || getTopicTitle($item->{web}, $item->{topic});
+      $class .= ' jqListyItemQuery';
+      $url = Foswiki::Func::getScriptUrlPath($web, $topic, "view");
     }  else {
       $title = $item->{title};
       $class .= ' jqListyItemText';
     }
 
-    my $defaultItemFormat = $this->{itemFormat}{$item->{type}} || '<span class=\'$class\'>$title</span>';
-    my $itemFormat = $defaultItemFormat;
-    $itemFormat = $params->{format} if defined $params->{format};
-    $itemFormat = $params->{$item->{type}."_format"} if defined $params->{$item->{type}."_format"};
+    my $itemFormat = $this->_getFormatOfType($params, $item->{type});
     $itemFormat = Foswiki::Func::decodeFormatTokens($itemFormat);
     $itemFormat = Foswiki::Func::expandCommonVariables($itemFormat, $topic, $web);
 
     my $line = $this->{format};
     
     $line =~ s/\$item\b/$itemFormat/g;
-    $line =~ s/\$tools\b/$itemTools/g;
     $line =~ s/\$class\b/$class/g;
     $line =~ s/\$date\b/Foswiki::Func::formatTime($item->{date}/g;
     $line =~ s/\$index\b/$item->{index}+1/ge;
@@ -244,10 +273,9 @@ sub LISTY {
   my $topButtons = '';
   my $bottomButtons = '';
   my $buttons = '';
-  if (!Foswiki::Func::getContext()->{static} && $allowChange) {
+  if (!Foswiki::Func::getContext()->{static} && $allowChange && !defined($theQuery)) {
     $buttons = Foswiki::Func::expandTemplate("listy::buttons");
   }
-  $bottomButtons = $buttons;
 
   if ($params->{buttons}) {
     if ($params->{buttons} eq 'top') {
@@ -255,7 +283,13 @@ sub LISTY {
       $bottomButtons = '';
     } elsif ($params->{buttons} eq 'both') {
       $topButtons = $buttons;
+      $bottomButtons = $buttons;
+    } elsif ($params->{buttons} eq 'bottom') {
+      $topButtons = '';
+      $bottomButtons = $buttons;
     } 
+  } else {
+    $bottomButtons = $buttons;
   }
 
   my $style = '';
@@ -267,6 +301,7 @@ sub LISTY {
   my $class = $params->{class} || '';
 
   my $result = $this->{header}.join("\n", @results).$this->{footer};
+  $result =~ s/\$tools\b/$itemTools/g;
   $result =~ s/\$buttons\b/$buttons/g;
   $result =~ s/\$topbuttons\b/$topButtons/g;
   $result =~ s/\$bottombuttons\b/$bottomButtons/g;
@@ -274,17 +309,27 @@ sub LISTY {
   $result =~ s/\$sourcetopic\b/$theTopic/g;
   $result =~ s/\$collection\b/$theCollection/g;
   $result =~ s/\$showcollections\b/$theShowCollections?'true':'false'/ge;
+  $result =~ s/\$collectionformfield\b/$theCollectionFormfield/g;
+  $result =~ s/\$collectionvalue\b/$theCollectionValue/g;
   $result =~ s/\$types\b/$theTypes/g;
   $result =~ s/\$autosave\b/$theAutoSave/g;
   $result =~ s/\$count\b/$count/g;
   $result =~ s/\$style\b/$style/g;
   $result =~ s/\$class\b/$class/g;
 
+  my @md5 = ();
+  foreach my $type (keys %types) {
+    my $format = $this->_getFormatOfType($params, $type);
+    push @md5, '"'.$type.'":"'.md5_hex($format).'"';
+  }
+  my $html5Data = "data-formatter-md5='{".join(", ", @md5)."}'" ;
+  $result =~ s/\$html5data/$html5Data/g;
+
   my $allCollections = defined($theCollections)?$theCollections:join(",", sort keys %allCollections);
   $result =~ s/\$allcollections/$allCollections/g;
 
 
-  writeDebug("all collections in $theWeb.$theTopic: $allCollections");
+  #writeDebug("all collections in $theWeb.$theTopic: $allCollections");
 
   my $listyId = "jqListyId".int(rand(1000));
   $result =~ s/\$listyId/$listyId/g;
@@ -302,7 +347,7 @@ sub LISTY {
     Foswiki::Plugins::JQueryPlugin::createPlugin("tabpane");
     Foswiki::Plugins::JQueryPlugin::createPlugin("render");
     Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::RENDER, JQUERYPLUGIN::I18N");
-<script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
+<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
 HERE
 
     $origTml = _entityEncode('%LISTY{'.$params->stringify.'}%');
@@ -327,6 +372,16 @@ HERE
   $result =~ s/\$tml\b/$origTml/g;
 
   return $result;
+}
+
+sub _getFormatOfType {
+  my ($this, $params, $type) = @_;
+
+  my $format = $this->{itemFormat}{$type} || '<span class=\'$class\'>$title</span>';
+  $format = $params->{format} if defined $params->{format};
+  $format = $params->{$type."_format"} if defined $params->{$type."_format"};
+
+  return $format;
 }
 
 sub json {
@@ -368,27 +423,6 @@ sub _entityDecode {
   return $text;
 }
 
-# sub _urlEncode {
-#   my $text = shift;
-#   return unless defined $text;
-#
-#   $text = Encode::encode_utf8($text) if $Foswiki::UNICODE;
-#   $text =~ s/([^0-9a-zA-Z-_.:~!*'\/])/'%'.sprintf('%02x',ord($1))/ge;
-#
-#   return $text;
-# }
-
- 
-# sub _urlDecode {
-#   my ($text, $doDecode) = @_;
-#   return "" unless defined $text;
-#
-#   $text =~ s/%([\da-f]{2})/chr(hex($1))/ge;
-#   $text = Encode::decode_utf8($text) if $doDecode && $Foswiki::UNICODE;
-#
-#   return $text;
-# }
-
 =begin TML
 
 ---++ getListyItems($web, $topic) -> @listyItems
@@ -400,19 +434,141 @@ returns all listy items stored in the given topic
 sub getListyItems {
   my ($this, $web, $topic, $meta) = @_;
 
-  writeDebug("getListyItems($web, $topic)");
+  #writeDebug("getListyItems($web, $topic)");
 
-  unless ($meta) {
-    my $wikiName = Foswiki::Func::getWikiName();
-    return unless Foswiki::Func::checkAccessPermission('VIEW', $wikiName, undef, $topic, $web);
-    ($meta) = Foswiki::Func::readTopic($web, $topic);
-  }
+  ($meta) = Foswiki::Func::readTopic($web, $topic) unless $meta;
   
   my @listyItems = $meta->find($this->{metaDataName});
 
-  writeDebug("found ".scalar(@listyItems));
+  #writeDebug("found ".scalar(@listyItems));
 
   return @listyItems;
+}
+
+=begin TML
+
+---++ getListyItemsByQuery($web, $topic, $query) -> @listyItems
+
+returns a list of items by query
+
+=cut
+
+sub getListyItemsByQuery {
+  my ($this, $web, $topic, $query) = @_;
+
+  #writeDebug("getListyItemsByQuery($web, $topic, $query)");
+  my @listyItems = ();
+
+  my $matches = Foswiki::Func::query($query, undef, { 
+    web => $web, 
+    files_without_match => 1 
+  });
+
+  my $i = 0;
+  while ($matches->hasNext) {
+    my $webtopic = $matches->next;
+    my ($w, $t) = Foswiki::Func::normalizeWebTopicName('', $webtopic);
+    my $item = _getListyFromTopic($w, $t);
+    if (defined $item) {
+      $item->{index} = $i;
+      $item->{type} = 'query';
+      push @listyItems, $item;
+      $i++;
+    }
+  }
+
+  #writeDebug("found $i");
+
+  return @listyItems;
+}
+
+=begin TML
+
+---++ getListyItemsByDBQuery($web, $topic, $query) -> @listyItems
+
+returns a list of items by query
+
+=cut
+
+sub getListyItemsByDBQuery {
+  my ($this, $web, $topic, $query) = @_;
+
+  writeDebug("getListyItemsDBByQuery($web, $topic, $query)");
+  my @listyItems = ();
+
+  require Foswiki::Plugins::DBCachePlugin;
+  my $db = Foswiki::Plugins::DBCachePlugin::getDB($web);
+
+  my $hits = $db->dbQuery($query, undef, "topictitle");
+
+  my $i = 0;
+  while (my $obj = $hits->next) {
+    my $t = $obj->fastget("topic");
+    my $item = _getListyFromTopic($web, $t);
+    if (defined $item) {
+      $item->{index} = $i;
+      $item->{type} = 'query';
+      push @listyItems, $item;
+      $i++;
+    }
+  }
+
+  writeDebug("found $i");
+
+  return @listyItems;
+}
+
+=begin TML
+
+---++ syncQueryListy($web, $topic, $collection, $queryItems) -> @items
+
+=cut
+
+sub syncQueryListy {
+  my ($this, $web, $topic, $collection, $queryItems) = @_;
+
+  my @listyItems = $this->getListyItems($web, $topic);
+  @listyItems = grep {$_->{collection} eq $collection} @listyItems;
+
+  return @$queryItems unless @listyItems;
+
+  my %indexes = ();
+  foreach my $item (@listyItems) {
+    $indexes{$item->{web}.'.'.$item->{topic}} = {
+      index => $item->{index},
+      name => $item->{name}
+    };
+  }
+
+  my %seen = ();
+  foreach my $item (@$queryItems) {
+    # propagate index and id to query listy
+    my $i = $indexes{$item->{web}.'.'.$item->{topic}};
+    next unless $i;
+    $item->{index} = $i->{index};
+    $item->{name} = $i->{name};
+
+    # remember seen query items
+    $seen{$item->{name}} = 1;
+  }
+
+if (0) {
+  # remove unseen query items from listy items 
+  my $needsSave = 0;
+  my $meta;
+  foreach my $item (@listyItems) {
+    unless ($seen{$item->{name}}) {
+      #writeDebug("item $item->{name} not seen anymore ... removing");
+      ($meta) = Foswiki::Func::readTopic($this->{baseWeb}, $this->{baseTopic}) unless $meta;
+      $meta->remove($this->{metaDataName}, $item->{name});
+      $needsSave = 1;
+    }
+  }
+
+  Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
+}
+
+  return @$queryItems;
 }
 
 =begin TML
@@ -486,6 +642,33 @@ sub _getListyFromRequest {
   };
 
   #print STDERR "item from request:".dump($item)."\n";
+
+  return $item;
+}
+
+sub _getListyFromTopic {
+  my ($web, $topic, $meta) = @_;
+
+  ($meta) = Foswiki::Func::readTopic($web, $topic) unless $meta;
+
+  my $info = $meta->getRevisionInfo();
+
+  my $summary = $meta->get("FIELD", "Summary");
+  $summary = $summary->{value} if defined $summary;
+  my $title = $meta->get("FIELD", "TopicTitle") || $meta->getPreference("TOPICTITLE");
+  $title = $title->{value} if defined $title;
+
+  my $item = {
+    date => $info->{date},
+    name => "id".int(rand(1000)).time(),
+    collection => undef,
+    summary => $summary,
+    title => $title,
+    web => $web,
+    topic => $topic,
+    type => "topic",
+    index => 0,
+  };
 
   return $item;
 }
@@ -600,6 +783,17 @@ sub jsonRpcSaveListy {
     unless defined $collection;
   writeDebug("collection=$collection");
 
+  my $collectionFormfield = $request->param("collectionFormfield") || '';
+  writeDebug("collectionFormfield=$collectionFormfield") if $collectionFormfield;
+
+  my $collectionValue = $request->param("collectionValue") || $collection;
+  writeDebug("collectionValue=$collectionValue");
+
+  if (Foswiki::Func::getContext->{DBCachePluginEnabled}) {
+    #require Foswiki::Plugins::DBCachePlugin;
+    Foswiki::Plugins::DBCachePlugin::disableSaveHandler();
+  }
+
   my @sorting = split(/\s*,\s*/, $sorting);
   my %seen = ();
   my $index = 0;
@@ -614,15 +808,32 @@ sub jsonRpcSaveListy {
     
     $newListy->{index} = $index++;
     $newListy->{collection} = $collection;
+    $newListy->{type} = 'topic' if $newListy->{type} eq 'query'; # SMELL: convert moved query items to topic items
 
-#   writeDebug("listy name=$newListy->{name}, ".
-#              "index=$newListy->{index}, ".
-#              "url=".($newListy->{url}||'').", ".
-#              "web=".($newListy->{web}||'').", ".
-#              "topic=".($newListy->{topic}||'').", ".
-#              "title=$newListy->{title}, ".
-#              "summary=$newListy->{summary}, ".
-#              "collection=$newListy->{collection}");
+    if ( $collectionFormfield
+      && $collection
+      && $newListy->{type} eq 'topic'
+      && defined $newListy->{web}
+      && defined $newListy->{topic})
+    {
+      writeDebug("found a collectionField=$collectionFormfield, reading in $newListy->{web}.$newListy->{topic}");
+      my ($listyMeta) = Foswiki::Func::readTopic($newListy->{web}, $newListy->{topic});
+      my $formfield = $listyMeta->get("FIELD", $collectionFormfield);
+      my $needsSave = 0;
+      if (defined $formfield) {
+        writeDebug("... topic=$newListy->{topic} old formfield value=$formfield->{value}");
+        if ($formfield->{value} ne $collectionValue) {
+          $needsSave = 1;
+          $formfield->{value} = $collectionValue;
+        }
+      } else {
+        writeDebug("... new formfield in $newListy->{topic}");
+        $listyMeta->put('FIELD', {name => $collectionFormfield, title => $collectionFormfield, value => $collectionValue});
+        $needsSave = 1;
+      }
+      writeDebug("changing formfield $collectionFormfield of " . $newListy->{web} . "." . $newListy->{topic} . " to $collectionValue") if $needsSave;
+      Foswiki::Func::saveTopic($newListy->{web}, $newListy->{topic}, $listyMeta) if $needsSave;
+    }
 
     $seen{$newListy->{name}} = 1;
 
@@ -645,6 +856,14 @@ sub jsonRpcSaveListy {
   writeDebug("saving $this->{baseWeb}.$this->{baseTopic}");
 
   Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
+
+  if (Foswiki::Func::getContext->{DBCachePluginEnabled}) {
+    Foswiki::Plugins::DBCachePlugin::enableSaveHandler();
+
+    writeDebug("reloading db cache for $this->{baseWeb}");
+    my $db = Foswiki::Plugins::DBCachePlugin::getDB($this->{baseWeb}); 
+    $db->load(2) if $db;
+  }
 
   return;
 }
@@ -746,4 +965,30 @@ sub readTemplate {
 
   Foswiki::Func::readTemplate("listyplugin");
 }
+
+=begin TML
+
+remove listy items that already exist in other collections
+
+=cut
+
+sub filterExistingListies {
+  my ($this, $web, $topic, $listies) = @_;
+
+  my @result = ();
+
+#print STDERR "listies=".dump($listies)."\n";
+
+  if ($listies && @$listies) {
+    my %existing = map {$_->{web}.'.'.$_->{topic} => $_} $this->getListyItems($web, $topic);
+#print STDERR "existing=".dump(\%existing)."\n";
+    foreach my $item (@$listies) {
+      push @result, $item unless $existing{$item->{web}.'.'.$item->{topic}};
+    }
+  }
+#print STDERR "result=".dump(\@result)."\n";
+
+  return @result;
+}
+
 1;

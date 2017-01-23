@@ -1,5 +1,6 @@
 Foswiki::Plugins::RenderPlugin,>=3.10,perl,Required. 
-Foswiki::Plugins::JQueryPlugin,>=6.00,perl,Required. 
+Foswiki::Plugins::JQueryPlugin,>=7.00,perl,Required. 
+Foswiki::Plugins::FilterPlugin,>=4.00,perl,Required. 
 Foswiki::Contrib::JsonRpcContrib,>=2.21,perl,Required. 
 ONLYIF ( $Foswiki::Plugins::VERSION < 2.1)
 Foswiki::Plugins::ZonePlugin,>=3.1,perl,Required. required for Foswiki < 1.1

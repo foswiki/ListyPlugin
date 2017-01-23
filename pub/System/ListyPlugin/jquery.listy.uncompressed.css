@@ -26,9 +26,11 @@
   margin:0.5em 0;
 */
   background: #f2fbff; 
-  border: 1px dashed #b6bcbf; 
+  border: 2px dashed #b6bcbf; 
+/*
   -webkit-border-radius: 3px;
           border-radius: 3px;
+*/
 }
 
 .jqListyItemTools {
@@ -62,7 +64,9 @@
 .jqListySelected {
   opacity:0.8;
   background-color:#efefef;
+/*
   border-radius:6px;
+*/
   border:0;
   overflow:hidden;
   -webkit-box-shadow: 1px 1px 7px rgba(0,0,0, 0.3) !important;

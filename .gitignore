@@ -3,10 +3,10 @@
 *.swp
 pub/System/ListyPlugin/jquery.listy.js
 pub/System/ListyPlugin/jquery.listy.css
-ListyPlugin.md5
-ListyPlugin.sha1
-ListyPlugin.tgz
-ListyPlugin.txt
-ListyPlugin.zip
-ListyPlugin_installer
-ListyPlugin_installer.pl
+/ListyPlugin.md5
+/ListyPlugin.sha1
+/ListyPlugin.tgz
+/ListyPlugin.txt
+/ListyPlugin.zip
+/ListyPlugin_installer
+/ListyPlugin_installer.pl
