@@ -4,18 +4,18 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Foswiki $ld\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"PO-Revision-Date: 2016-01-07 03:10+0200\n"
+"PO-Revision-Date: 2017-12-18 16:20+0200\n"
 "Last-Translator: Vadim Belman <vrurg@lflat.org>\n"
 "Language-Team: <translation@linux.org.ua>\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 2.1\n"
+"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<="
+"4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 2.4\n"
 "X-Poedit-Language: Ukrainian\n"
 "X-Poedit-Country: UKRAINE\n"
 "X-Poedit-SourceCharset: utf-8\n"
@@ -106,9 +106,8 @@ msgid "Text"
 msgstr "Текст"
 
 #: templates/listyplugin.tmpl:185
-#, fuzzy
 msgid "Title"
-msgstr "Заголовок:"
+msgstr "Заголовок"
 
 #: templates/listyplugin.tmpl:172 templates/listyplugin.tmpl:201
 msgid "Topic"
@@ -121,4 +120,3 @@ msgstr "URL-адреса"
 #: templates/listyplugin.tmpl:197
 msgid "Web"
 msgstr "Розділ"
-
