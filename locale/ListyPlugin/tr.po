@@ -7,7 +7,6 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: 2015-07-30 20:25+0200\n"
-"Last-Translator: Lieven L. Litaer <qephom@gmx.de>\n"
 "Language-Team: TURKCE <yamant@gmail.com>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -16,36 +15,40 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 2.1\n"
 
-#: templates/listyplugin.tmpl:219
+#: templates/listyplugin.tmpl:220
 msgid "Add a description for this item."
 msgstr ""
 
-#: templates/listyplugin.tmpl:94
+#: templates/listyplugin.tmpl:95
 msgid "Add an item"
 msgstr ""
 
-#: templates/listyplugin.tmpl:42
+#: templates/listyplugin.tmpl:43
 #, fuzzy
 msgid "Add item"
 msgstr "Kullanıcı ekle"
 
-#: templates/listyplugin.tmpl:45
+#: data/System/ListyPlugin.txt:245 lib/Foswiki/Plugins/ListyPlugin/Core.pm:449
+msgid "Add to favorites"
+msgstr ""
+
+#: templates/listyplugin.tmpl:46
 msgid "Append an item to the list"
 msgstr ""
 
-#: templates/listyplugin.tmpl:78
+#: templates/listyplugin.tmpl:79
 msgid "Are you sure that you want to delete %1?"
 msgstr ""
 
-#: templates/listyplugin.tmpl:226
+#: templates/listyplugin.tmpl:227
 msgid "Collection"
 msgstr ""
 
-#: templates/listyplugin.tmpl:187
+#: templates/listyplugin.tmpl:188
 msgid "Customize the text of this item."
 msgstr ""
 
-#: templates/listyplugin.tmpl:73
+#: templates/listyplugin.tmpl:74
 #, fuzzy
 msgid "Delete Item"
 msgstr "Sil"
@@ -55,13 +58,17 @@ msgstr "Sil"
 msgid "Delete this item"
 msgstr "Konuyu sil"
 
-#: templates/listyplugin.tmpl:134 templates/listyplugin.tmpl:20
+#: templates/listyplugin.tmpl:135 templates/listyplugin.tmpl:20
 #, fuzzy
 msgid "Edit this item"
 msgstr "Tablo Düzenle"
 
-#: templates/listyplugin.tmpl:177
+#: templates/listyplugin.tmpl:178
 msgid "External"
+msgstr ""
+
+#: data/System/ListyPlugin.txt:243 lib/Foswiki/Plugins/ListyPlugin/Core.pm:447
+msgid "Favorite"
 msgstr ""
 
 #: templates/listyplugin.tmpl:21
@@ -69,53 +76,64 @@ msgstr ""
 msgid "Insert a new item here"
 msgstr "Eklentiyi sil"
 
-#: templates/listyplugin.tmpl:64
+#: data/System/ListyPlugin.txt:248 lib/Foswiki/Plugins/ListyPlugin/Core.pm:457
+msgid "Remove from favorites"
+msgstr ""
+
+#: templates/listyplugin.tmpl:65
 #, fuzzy
 msgid "Revert changes"
 msgstr "Değişiklikleri görebileceğiniz adres:"
 
-#: templates/listyplugin.tmpl:67
+#: templates/listyplugin.tmpl:68
 msgid "Revert sorting order to its initial state"
 msgstr ""
 
-#: templates/listyplugin.tmpl:53
+#: templates/listyplugin.tmpl:54
 #, fuzzy
 msgid "Save changes"
 msgstr "(değişiklikler)"
 
-#: templates/listyplugin.tmpl:56
+#: templates/listyplugin.tmpl:57
 msgid "Save sorting order"
 msgstr ""
 
-#: templates/listyplugin.tmpl:228
+#: templates/listyplugin.tmpl:229
 msgid "Select the collection to hold the item."
 msgstr ""
 
-#: templates/listyplugin.tmpl:217
+#: templates/listyplugin.tmpl:218
 msgid "Summary"
 msgstr ""
 
-#: templates/listyplugin.tmpl:167
+#: templates/listyplugin.tmpl:168
 #, fuzzy
 msgid "Text"
 msgstr "Metin içinde"
 
-#: templates/listyplugin.tmpl:185
+#: templates/listyplugin.tmpl:186
 #, fuzzy
 msgid "Title"
 msgstr "Konu başlığında"
 
-#: templates/listyplugin.tmpl:172 templates/listyplugin.tmpl:201
+#: templates/listyplugin.tmpl:173 templates/listyplugin.tmpl:202
 #, fuzzy
 msgid "Topic"
 msgstr "Bu konunun bağlanacağı üst konu:"
 
-#: templates/listyplugin.tmpl:209
+#: templates/listyplugin.tmpl:210
 msgid "URL"
 msgstr ""
 
-#: templates/listyplugin.tmpl:197
+#: data/System/ListyPlugin.txt:246
+msgid "Unavorite"
+msgstr ""
+
+#: lib/Foswiki/Plugins/ListyPlugin/Core.pm:455
+msgid "Unfavorite"
+msgstr ""
+
+#: templates/listyplugin.tmpl:198
 #, fuzzy
 msgid "Web"
 msgstr "Webler"
-

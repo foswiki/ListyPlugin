@@ -39,7 +39,7 @@ $topbuttons<ul class='jqListyContainer'>
 
 %{ listy buttons - add}%
 %TMPL:DEF{"listy::buttons::add"}%<!-- -->
-<li class='jqListyAdd'>%BUTTON{
+<li class='jqListyAdd $position'>%BUTTON{
     "%MAKETEXT{"Add item"}%"
     icon="fa-plus"
     class="jqButtonSimple"
@@ -52,7 +52,7 @@ $topbuttons<ul class='jqListyContainer'>
 %TMPL:DEF{"listy::buttons::save"}%<!-- -->
 <li class='jqListySave'>%BUTTON{
     "%MAKETEXT{"Save changes"}%"
-    icon="fa-floppy-o"
+    icon="fa-check"
     class="jqButtonSimple"
     title="%MAKETEXT{"Save sorting order"}%"
     style="float:none";
@@ -63,7 +63,7 @@ $topbuttons<ul class='jqListyContainer'>
 %TMPL:DEF{"listy::buttons::revert"}%<!-- -->
 <li class='jqListyRevert'>%BUTTON{
     "%MAKETEXT{"Revert changes"}%"
-    icon="fa-ban"
+    icon="fa-times"
     class="jqButtonSimple"
     title="%MAKETEXT{"Revert sorting order to its initial state"}%"
     style="float:none";
@@ -230,6 +230,9 @@ $topbuttons<ul class='jqListyContainer'>
 </div>
 <!-- -->%TMPL:END%
 %TMPL:DEF{"listy::editor::collectionstep::hidden"}%<input type="hidden" name="collection" value="{{:collection}}" />%TMPL:END%
+
+%{ listy favbutton - format}%
+%TMPL:DEF{"listy::favbutton"}%<a href="#" $style class="jqFavButton listyFavButton $class" title="$title" rel="nofollow" data-is-favorite="$state" data-web="$favweb" data-topic="$favtopic" data-name="$name" data-collection="$collection" data-source="$source" data-favtext="$percntENCODE{$favtext}$percnt" data-unfavtext="$percntENCODE{$unfavtext}$percnt" data-favicon="$percntENCODE{$favicon}$percnt" data-unfavicon="$percntENCODE{$unfavicon}$percnt" data-favtitle="$percntENCODE{$favtitle}$percnt" data-unfavtitle="$percntENCODE{$unfavtitle}$percnt"><span class="listyFavButtonIcon">$icon</span><span class="listyFavButtonLabel">$text</span></a>%TMPL:END%
 
 %{ test tmpl ... never mind }%
 %TMPL:DEF{"listy::isloaded"}%true%TMPL:END%

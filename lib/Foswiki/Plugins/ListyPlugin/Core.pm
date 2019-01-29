@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2017 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2019 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -87,6 +87,7 @@ sub new {
   $this->{itemFormat}{external} = Foswiki::Func::expandTemplate("listy::item::external") || '';
   $this->{itemFormat}{text} = Foswiki::Func::expandTemplate("listy::item::text") || '';
   $this->{itemFormat}{query} = Foswiki::Func::expandTemplate("listy::item::query") || '';
+  $this->{favButton} = Foswiki::Func::expandTemplate("listy::favbutton") || '';
 
   return $this->init($session);
 }
@@ -131,7 +132,7 @@ sub LISTY {
   my $theCollectionValue = $params->{collection_value} || $theCollection;
   my $theReverse = Foswiki::Func::isTrue($params->{reverse}, 0);
   my $theSort = $params->{sort};
-  $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary|date)$/;
+  $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary|date|topictitle)$/;
 
   my $theTypes = $params->{type} || $params->{types} ||'text, topic, external';
 
@@ -178,15 +179,28 @@ sub LISTY {
 
   @listyItems = grep {$_->{collection} eq $theCollection} grep {$types{$_->{type}}} @listyItems;
 
+  my %order = ();
+  my $isNumeric = 0;
   if ($theSort eq 'index') {
-    @listyItems = sort {$a->{index} <=> $b->{index}} @listyItems;
+    $order{$_->{name}} = $_->{index} foreach @listyItems;
+    $isNumeric = 1;
   } elsif ($theSort eq 'date') {
-    @listyItems = sort {$a->{date} <=> $b->{date}} @listyItems;
+    $order{$_->{name}} = $_->{date} foreach @listyItems;
+    $isNumeric = 1;
   } elsif ($theSort eq 'title') {
-    @listyItems = sort {$a->{title} cmp $b->{title}} @listyItems;
+    $order{$_->{name}} = $_->{title} foreach @listyItems;
+  } elsif ($theSort eq 'topictitle') {
+    $order{$_->{name}} = Foswiki::Func::getTopicTitle($_->{web}, $_->{topic}) foreach @listyItems;
   } else {
-    @listyItems = sort {lc($a->{$theSort}||$a->{topic}||$a->{url}||$a->{title}) cmp lc($b->{$theSort}||$b->{topic})||$b->{url}||$b->{title}} @listyItems;
+    $order{$_->{name}} = lc($a->{$theSort}||$a->{topic}||$a->{url}||$a->{title}) foreach @listyItems;
   }
+
+  if ($isNumeric) {
+    @listyItems = sort {$order{$a->{name}} <=> $order{$b->{name}}} @listyItems;
+  } else {
+    @listyItems = sort {$order{$a->{name}} cmp $order{$b->{name}}} @listyItems;
+  }
+
   @listyItems = reverse @listyItems if $theReverse;
 
   #print STDERR "listy ($theSort, $theCollection): ".join(',', map {"title=$_->{title}, index=$_->{index}"} @listyItems)."\n";
@@ -214,7 +228,6 @@ sub LISTY {
       next;
     }
 
-    my $title = '';
     my $class = 'jqListyItem';
     my $summary = $item->{summary} || '';
     my $url = '';
@@ -224,22 +237,20 @@ sub LISTY {
     ($web, $topic) = Foswiki::Func::normalizeWebTopicName($web, $topic);
 
     if ($item->{type} eq 'topic') {
-      $title = $item->{title} || getTopicTitle($item->{web}, $item->{topic});
       $class .= ' jqListyItemTopic';
       $class .= ' foswikiCurrentTopicLink' if $item->{web} && $item->{topic} && $this->{baseWeb} eq $item->{web} && $this->{baseTopic} eq $item->{topic};
       $url = Foswiki::Func::getScriptUrlPath($web, $topic, "view");
     } elsif ($item->{type} eq 'external') {
-      $title = $item->{title}||$item->{url};
       $class .= ' jqListyItemExternal';
       $url = $item->{url} || '';
     } elsif ($item->{type} eq 'query') {
-      $title = $item->{title} || getTopicTitle($item->{web}, $item->{topic});
       $class .= ' jqListyItemQuery';
       $url = Foswiki::Func::getScriptUrlPath($web, $topic, "view");
     }  else {
-      $title = $item->{title};
       $class .= ' jqListyItemText';
     }
+
+    my $title = getListyItemTitle($item);
 
     my $itemFormat = $this->_getFormatOfType($params, $item->{type});
     $itemFormat = Foswiki::Func::decodeFormatTokens($itemFormat);
@@ -280,13 +291,17 @@ sub LISTY {
   if ($params->{buttons}) {
     if ($params->{buttons} eq 'top') {
       $topButtons = $buttons;
+      $topButtons =~ s/\$position/top/g;
       $bottomButtons = '';
     } elsif ($params->{buttons} eq 'both') {
       $topButtons = $buttons;
+      $topButtons =~ s/\$position/top/g;
       $bottomButtons = $buttons;
+      $bottomButtons =~ s/\$position/bottom/g;
     } elsif ($params->{buttons} eq 'bottom') {
       $topButtons = '';
       $bottomButtons = $buttons;
+      $bottomButtons =~ s/\$position/bottom/g;
     } 
   } else {
     $bottomButtons = $buttons;
@@ -374,6 +389,147 @@ HERE
   return $result;
 }
 
+=begin TML
+
+---++ getListyItemTitle($item)
+
+returns the title of a listy item depending on its type
+
+=cut
+
+sub getListyItemTitle {
+  my ($item) = @_;
+
+  my $title = "";
+
+  if ($item->{type} eq 'topic') {
+    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web}, $item->{topic});
+  } elsif ($item->{type} eq 'external') {
+    $title = $item->{title} || $item->{url};
+  } elsif ($item->{type} eq 'query') {
+    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web}, $item->{topic});
+  } else {
+    $title = $item->{title};
+  }
+
+  return $title;
+}
+
+=begin TML
+
+---++ FAVBUTTON($this, $params, $theTopic, $theWeb) -> $result
+
+implementation of this macro
+
+=cut
+
+sub FAVBUTTON {
+  my ($this, $params, $topic, $web) = @_;
+
+  my $wikiName = Foswiki::Func::getWikiName();
+
+  Foswiki::Plugins::JQueryPlugin::createPlugin("i18n");
+  Foswiki::Plugins::JQueryPlugin::createPlugin("jsonrpc");
+
+  Foswiki::Func::addToZone("script", "LISTY::FAVBUTTON", <<'HERE', "JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::I18N");
+<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.favbutton.js"></script> 
+HERE
+
+  my $source = $params->{_DEFAULT} || $params->{source} || "$Foswiki::cfg{UsersWebName}.$wikiName";
+  my ($sourceWeb, $sourceTopic) = Foswiki::Func::normalizeWebTopicName(undef, $source);
+  $source = $sourceWeb.'.'.$sourceTopic;
+
+  my ($favWeb, $favTopic) = Foswiki::Func::normalizeWebTopicName($params->{web} || $web, $params->{topic} || $topic);
+  my $fav = $favWeb.'.'.$favTopic;
+
+  my $collection = $params->{collection} || "mylinks";
+
+  my $favtext = $params->{favtext} || '%MAKETEXT{"Favorite"}%';
+  my $favicon = $params->{favicon} || 'fa-star-o';
+  my $favtitle = $params->{favtitle} || '%MAKETEXT{"Add to favorites"}%';
+  my $animate = $params->{animate};
+
+  my @class = ();
+  push @class, $params->{class} if defined $params->{class};
+
+  my $unfavtext = $params->{unfavtext} || '%MAKETEXT{"Unfavorite"}%';
+  my $unfavicon = $params->{unfavicon} || 'fa-star';
+  my $unfavtitle = $params->{unfavtitle} || '%MAKETEXT{"Remove from favorites"}%';
+
+  $favicon = '%JQICON{"'.$favicon.'"'.(defined $animate?" animate=\"$animate\"":'').'}%' if $favicon =~ /^[a-z\-_]+$/i;
+  $unfavicon = '%JQICON{"'.$unfavicon.'"'.(defined $animate?" animate=\"$animate\"":'').'}%' if $unfavicon =~ /^[a-z\-_]+$/i;
+
+  my $showLabel = Foswiki::Func::isTrue($params->{showlabel}, 1);
+  unless ($showLabel) {
+    $favtext = '';
+    $unfavtext = '';
+    push @class, "listyFavButtonNoLabel";
+  }
+
+  my $showIcon = Foswiki::Func::isTrue($params->{showicon}, 1);
+  unless ($showIcon) {
+    $favicon = '';
+    $unfavicon = '';
+    push @class, "listyFavButtonNoIcon";
+  }
+
+  my $class = join(" ", @class);
+
+  my $listyItem = $this->getListyItemOfTopic($sourceWeb, $sourceTopic, $collection, $favWeb, $favTopic);
+  my $text = $listyItem?$unfavtext:$favtext;
+  my $icon = $listyItem?$unfavicon:$favicon;
+  my $title = $listyItem?$unfavtitle:$favtitle;
+  my $state = $listyItem?'true':'false';
+  my $name = $listyItem?$listyItem->{name}:'';
+
+  my $style = $params->{style} || '';
+  $style = "style=\"$style\"" if $style;
+
+  my $result = $this->{favButton};
+  $result =~ s/\$favtext\b/$favtext/g;
+  $result =~ s/\$favicon\b/$favicon/g;
+  $result =~ s/\$favtitle\b/$favtitle/g;
+
+  $result =~ s/\$unfavtext\b/$unfavtext/g;
+  $result =~ s/\$unfavicon\b/$unfavicon/g;
+  $result =~ s/\$unfavtitle\b/$unfavtitle/g;
+
+  $result =~ s/\$text\b/$text/g;
+  $result =~ s/\$icon\b/$icon/g;
+  $result =~ s/\$title\b/$title/g;
+
+  $result =~ s/\$class\b/$class/g;
+  $result =~ s/\$source\b/$source/g;
+  $result =~ s/\$sourcetopic\b/$sourceTopic/g;
+  $result =~ s/\$sourceweb\b/$sourceWeb/g;
+  $result =~ s/\$fav\b/$fav/g;
+  $result =~ s/\$favtopic\b/$favTopic/g;
+  $result =~ s/\$favweb\b/$favWeb/g;
+  $result =~ s/\$state\b/$state/g;
+  $result =~ s/\$collection\b/$collection/g;
+  $result =~ s/\$style\b/$style/g;
+  $result =~ s/\$name\b/$name/g;
+
+  return Foswiki::Func::decodeFormatTokens($result);
+}
+
+sub getListyItemOfTopic {
+  my ($this, $sourceWeb, $sourceTopic, $collection, $web, $topic) = @_;
+
+  my @listyItems = $this->getListyItems($sourceWeb, $sourceTopic);
+  foreach my $item (@listyItems) {
+    #print STDERR "... checking listy $item->{web}.$item->{topic}\n";
+    if ($item->{type} eq 'topic' && 
+        $item->{collection} eq $collection && 
+        $item->{web} && $item->{web} eq $web && 
+        $item->{topic} && $item->{topic} eq $topic) {
+      return $item;
+    }
+  }
+
+  return;
+}
+
 sub _getFormatOfType {
   my ($this, $params, $type) = @_;
 
@@ -425,7 +581,7 @@ sub _entityDecode {
 
 =begin TML
 
----++ getListyItems($web, $topic) -> @listyItems
+---++ getListyItems($web, $topic, $meta) -> @listyItems
 
 returns all listy items stored in the given topic
 
@@ -584,7 +740,7 @@ sub jsonRpcSaveListyItem {
 
   writeDebug("called jsonRpcSaveListyItem(), topic=$this->{baseWeb}.$this->{baseTopic}, wikiName=$wikiName");
 
-  throw Foswiki::Contrib::JsonRpcContrib::Error(404, "Topic $this->{baseWeb}.$this->{baseTopic} does not exist") 
+  throw Foswiki::Contrib::JsonRpcContrib::Error(404, "Topic does not exist") 
     unless Foswiki::Func::topicExists($this->{baseWeb}, $this->{baseTopic});
 
   throw Foswiki::Contrib::JsonRpcContrib::Error(401, "Access denied")
@@ -618,6 +774,18 @@ sub jsonRpcSaveListyItem {
   Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
 
   return $newListy;
+}
+
+sub createNewListy {
+  my ($this, $meta, $collection, @params) = @_;
+
+  return {
+    date => time(),
+    name => "id".int(rand(1000)).time(),
+    collection => $collection,
+    index => $this->getMaxIndex($meta, $collection),
+    @params
+  };
 }
 
 sub _getListyFromRequest {
@@ -728,7 +896,7 @@ sub jsonRpcDeleteListyItem {
 
   writeDebug("called jsonRpcDeleteListyItem(), topic=$this->{baseWeb}.$this->{baseTopic}, wikiName=$wikiName");
 
-  throw Foswiki::Contrib::JsonRpcContrib::Error(404, "Topic $this->{baseWeb}.$this->{baseTopic} does not exist") 
+  throw Foswiki::Contrib::JsonRpcContrib::Error(404, "Topic does not exist") 
     unless Foswiki::Func::topicExists($this->{baseWeb}, $this->{baseTopic});
 
   throw Foswiki::Contrib::JsonRpcContrib::Error(401, "Access denied")
@@ -764,7 +932,7 @@ sub jsonRpcSaveListy {
 
   writeDebug("called jsonRpcSaveListy(), topic=$this->{baseWeb}.$this->{baseTopic}, wikiName=$wikiName");
 
-  throw Foswiki::Contrib::JsonRpcContrib::Error(404, "Topic $this->{baseWeb}.$this->{baseTopic} does not exist") 
+  throw Foswiki::Contrib::JsonRpcContrib::Error(404, "Topic does not exist") 
     unless Foswiki::Func::topicExists($this->{baseWeb}, $this->{baseTopic});
 
   throw Foswiki::Contrib::JsonRpcContrib::Error(401, "Access denied")
@@ -898,58 +1066,6 @@ sub getMaxIndex {
 
 =begin TML
 
-get topic title either by using DBCachePlugin if installed or by reading the PREFs hardcore
-
-=cut
-
-sub getTopicTitle {
-  my ($web, $topic) = @_;
-
-  if (Foswiki::Func::getContext()->{DBCachePluginEnabled}) {
-    require Foswiki::Plugins::DBCachePlugin;
-    return Foswiki::Plugins::DBCachePlugin::getTopicTitle($web, $topic);
-  } 
-
-  my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
-
-  if ($Foswiki::cfg{SecureTopicTitles}) {
-    my $wikiName = Foswiki::Func::getWikiName();
-    return $topic
-      unless Foswiki::Func::checkAccessPermission('VIEW', $wikiName, $text, $topic, $web, $meta);
-  }
-
-  # read the formfield value
-  my $title = $meta->get('FIELD', 'TopicTitle');
-  if ($title) {
-    $title = $title->{value};
-  }
-
-  # read the topic preference
-  unless ($title) {
-    $title = $meta->get('PREFERENCE', 'TOPICTITLE');
-    if ($title) {
-      $title = $title->{value};
-    }
-  }
-
-  # read the preference
-  unless ($title)  {
-    Foswiki::Func::pushTopicContext($web, $topic);
-    $title = Foswiki::Func::getPreferencesValue('TOPICTITLE');
-    Foswiki::Func::popTopicContext();
-  }
-
-  # default to topic name
-  $title ||= $topic;
-
-  $title =~ s/\s*$//;
-  $title =~ s/^\s*//;
-
-  return $title;
-} 
-
-=begin TML
-
 reads the listyplugin templates unless already loaded
 
 =cut
@@ -989,6 +1105,284 @@ sub filterExistingListies {
 #print STDERR "result=".dump(\@result)."\n";
 
   return @result;
+}
+
+=begin TML
+
+convert one or multiple sidebar / leftbar topics to listies
+
+=cut
+
+sub restImportSideBar {
+  my ($this) = @_;
+
+  my $request = Foswiki::Func::getRequestObject();
+
+  my $web = $request->param("web") || $Foswiki::cfg{UsersWebName};
+  my $suffix = $request->param("suffix") || 'LeftBar';
+  my $include = $request->param("include");
+  my $exclude = $request->param("exclude");
+  my $debug = Foswiki::Func::isTrue($request->param("debug"), 0);
+  my $verbose = Foswiki::Func::isTrue($request->param("verbose"), 0);
+  my $target = $request->param("target") || $Foswiki::cfg{UsersWebName};
+  my $collection = $request->param("collection") || 'mylinks';
+
+  my $matches = Foswiki::Func::searchInWebContent($suffix, $web, undef, {scope => "topic"});
+  my $wikiName = Foswiki::Func::getWikiName();
+
+  my $index = 0;
+  foreach my $topic (sort keys(%$matches)) {
+    next if $topic =~ /^(WebLeftBar|WebLeftBarExample|AdminUserLeftBar)$/;
+    next if $include && $topic !~ /$include/;
+    next if $exclude && $topic =~ /$exclude/;
+
+    unless (Foswiki::Func::checkAccessPermission('VIEW', $wikiName, undef, $topic, $web)) {
+      print STDERR "WARNING: no view rights on $web.$topic\n";
+      next;
+    }
+
+    my $wikiUser = $topic;
+    $wikiUser =~ s/$suffix$//;
+    print STDERR "### reading $web.$topic for $wikiUser\n" if $verbose;
+
+    my $targetWeb = $target;
+    my $targetTopic = $wikiUser;
+    ($targetWeb, $targetTopic) = Foswiki::Func::normalizeWebTopicName($targetWeb, $targetTopic);
+    print STDERR "### targetWeb=$targetWeb targetTopic=$targetTopic\n" if $verbose;
+
+    if (!Foswiki::Func::topicExists($targetWeb, $targetTopic)) {
+      print STDERR "WARNING: target $targetWeb.$targetTopic does not exist ... cannot import $suffix\n";
+      next;
+    }
+
+    unless (Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $targetTopic, $targetWeb)) {
+      print STDERR "WARNING: no edit rights on $targetWeb.$targetTopic\n";
+      next;
+    }
+
+    my ($targetMeta) = Foswiki::Func::readTopic($targetWeb, $targetTopic);
+    my @listyItems = $this->getListyItems($targetWeb, $targetTopic, $targetMeta);
+    #print STDERR "### listyItems=".dump(\@listyItems)."\n" if $debug && $verbose;
+
+    my ($meta, $text) = Foswiki::Func::readTopic($web, $topic);
+
+    my $needsSave = 0;
+    while ($text =~ /^(?:   )+\* (.*)$/gm) {
+      my $item = $1;
+
+      # clean up
+      $item =~ s/\s*<hr *\/?>\s*//;
+      next if $item =~ /^\s*\*My links\*\s*$/i;
+      next if $item =~ /Create New Topic/i;
+      next if $item =~ /My User Page/i;
+      next if $item =~ /SCRIPTURL(?:PATH)?\{["']?search["']?\}%/i;
+
+      my $listyTitle = '';
+      my $listyWeb = '';
+      my $listyTopic = '';
+      my $listyUrl = '';
+      my $listyType = 'topic';
+      my $listySummary = '';
+      
+      if ($item =~ /^\s*\[\[(?:($Foswiki::regex{webNameRegex})\.)?($Foswiki::regex{wikiWordRegex}|$Foswiki::regex{abbrevRegex}(?:$Foswiki::regex{anchorRegex})?)\]\[(.*?)\]\]\s*$/) {
+        $listyWeb = $1 || '';
+        $listyTopic = $2 || '';
+        $listyTitle = $3 || '';
+      }  elsif ($item =~ /^\s*(?:($Foswiki::regex{webNameRegex})\.)?($Foswiki::regex{wikiWordRegex}|$Foswiki::regex{abbrevRegex}(?:$Foswiki::regex{anchorRegex})?)\s*$/) {
+        $listyWeb = $1 || '';
+        $listyTopic = $2 || '';
+      } elsif ($item =~ /^\s*(https?:\/\/.*?)\s*$/) {
+        $listyType = 'external';
+        $listyUrl = $1;
+      } else {
+        $listyType = 'text';
+        $listySummary = $item;
+      }
+
+      $listyTitle = '' if $listyTitle eq 'Home' && $listyTopic eq $Foswiki::cfg{HomeTopicName};
+
+      #print STDERR "... reading list item $item\n" if $verbose;
+      #print STDERR "... web=$listyWeb, topic=$listyTopic, title=$listyTitle\n" if $debug && $verbose;
+
+      my $newListy = $this->createNewListy($targetMeta, $collection, 
+        type => $listyType,
+        title => $listyTitle,
+        web => $listyWeb,
+        topic => $listyTopic,
+        url => $listyUrl,
+        summary => $listySummary,
+      );
+
+      if ($this->listyExists($targetMeta, $newListy, \@listyItems)) {
+        print STDERR "INFO: listy already exists ... skipping\n" if $verbose;
+      } else {
+        print STDERR "### new listy\n" if $verbose;
+        #print STDERR dump($newListy)."\n" if $debug && $verbose;
+        $targetMeta->putKeyed($this->{metaDataName}, $newListy);
+        $needsSave = 1;
+      }
+    }
+
+    if ($needsSave) {
+      print STDERR "### saving to $targetWeb.$targetTopic\n" if $verbose;
+      Foswiki::Func::saveTopic($targetWeb, $targetTopic, $targetMeta, undef, {ignorepermissions=>1}) unless $debug;
+      $index++;
+    } else {
+      print STDERR "### nothing changed\n" if $verbose;
+    }
+  }
+
+  return $index."\n";
+}
+
+sub _isEqual {
+  my ($a, $b) = @_;
+  
+  if (defined $a) {
+    if (defined $b) {
+      return 1 if $a eq $b;
+    }
+  } else {
+    return 1 if !defined($b);
+  }
+
+  return 0;
+}
+
+sub _isEqualListy {
+  my ($a, $b) = @_;
+
+  return 0 unless _isEqual($a->{type}, $b->{type});
+  return 0 unless _isEqual($a->{title}, $b->{title});
+  return 0 unless _isEqual($a->{url}, $b->{url});
+  return 0 unless _isEqual($a->{topic}, $b->{topic});
+  return 0 unless _isEqual($a->{web}, $b->{web});
+  return 0 unless _isEqual($a->{summary}, $b->{summary});
+  return 0 unless _isEqual($a->{collection}, $b->{collection});
+
+  return 1;
+}
+
+sub listyExists {
+  my ($this, $meta, $listy, $list) = @_;
+
+  my $web = $meta->web;
+  my $topic = $meta->topic;
+  $list ||= $this->getListyItems($meta);
+
+  foreach my $item (@$list) {
+    return 1 if _isEqualListy($item, $listy);
+    #print STDERR "listies differ\n".dump($listy)."\n".dump($item)."\n";
+  }
+
+
+  return 0;
+}
+
+sub solrIndexTopicHandler {
+  my ($this, $indexer, $doc, $web, $topic, $meta, $text) = @_;
+
+  # delete all previous comments of this topic
+  $indexer->deleteByQuery("type:metadata form:Listy web:$web topic:$topic");
+
+  my @listyItems = $this->getListyItems($web, $topic, $meta);
+  return unless @listyItems;
+
+  my @aclFields = $indexer->getAclFields($web, $topic, $meta);
+
+  foreach my $item (@listyItems) {
+
+    $indexer->log("Indexing listy $item->{name} at $web.$topic");
+
+    # Listy mapping to solr fields:
+    #
+    # date -> date
+    # name -> name
+    # summary -> summary
+    # title -> title
+    # collection -> field_Collecton_s
+    # web -> field_Web_s
+    # topic -> field_Topic_s
+    # type -> field_Type_s
+    # url -> field_URL_s
+    # index -> field_Index_d
+
+    # set doc fields
+    my $date = Foswiki::Func::formatTime($item->{date}, 'iso', 'gmtime');
+
+    my $webtopic = "$web.$topic";
+    $webtopic =~ s/\//./g;
+    my $id = $webtopic . '#' . $item->{name};
+
+    my $url = $indexer->getScriptUrlPath($web, $topic, 'view'); # TODO: let's have an url to display one listy
+
+    my $title = getListyItemTitle($item);
+    $title = $this->{session}->renderer->TML2PlainText($title, undef, "showvar");
+
+    # index this listy
+    my $listyDoc = $indexer->newDocument();
+    $listyDoc->add_fields(
+      'id' => $id,
+      'type' => 'metadata',
+      'form' => 'Listy',
+      'icon' => 'fa-list',
+      'name' => $item->{name},
+      'web' => $web,
+      'topic' => $topic,
+      'webtopic' => $webtopic,
+      'date' => $date,
+      'title' => $title,
+      'text' => $item->{summary},
+      'url' => $url,
+
+      ### TODO missing
+      # 'author' => $item->{author},
+      # 'contributor' => $item->{author},
+      # 'createauthor' => $item->{createauthor},
+      # 'createdate' => $item->{createdate},
+
+      'container_id' => $web . '.' . $topic,
+      'container_web' => $web,
+      'container_topic' => $topic,
+      'container_url' => Foswiki::Func::getViewUrl($web, $topic),
+      'container_title' => Foswiki::Func::getTopicTitle($web, $topic, undef, $meta),
+
+      'field_Collection_s' => $item->{collection},
+      'field_Web_s' => $item->{web},
+      'field_Topic_s' => $item->{topic},
+      'field_Type_s' => $item->{type},
+      'field_URL_s' => $item->{url},
+      'field_Index_d' => $item->{index},
+      'field_TopicType_lst' => 'Listy',
+    );
+
+    my $contentLanguage = $indexer->getContentLanguage($web, $topic);
+    if (defined $contentLanguage && $contentLanguage ne 'detect') {
+      $listyDoc->add_fields(
+        language => $contentLanguage,
+        'text_' . $contentLanguage => $item->{text},
+      );
+    }
+
+    # add to topic doc
+    $doc->add_fields('catchall' => $item->{title}) if $item->{title};
+    $doc->add_fields('catchall' => $item->{summary}) if $item->{summary};
+
+    # add extra fields, i.e. ACLs
+    $doc->add_fields(@aclFields) if @aclFields;
+
+    # TODO missing
+    #$doc->add_fields('contributor' => $item->{author});
+
+    # add the document to the index
+    try {
+      $indexer->add($listyDoc);
+    }
+    catch Error::Simple with {
+      my $e = shift;
+      $indexer->log("ERROR: " . $e->{-text});
+    };
+  }
 }
 
 1;

@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2017 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2019 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,8 +28,8 @@ use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Contrib::JsonRpcContrib ();
 
-our $VERSION = '2.00';
-our $RELEASE = '23 Jan 2017';
+our $VERSION = '3.00';
+our $RELEASE = '29 Jan 2019';
 our $SHORTDESCRIPTION = 'Fancy list manager';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;
@@ -44,27 +44,57 @@ our $core;
 sub initPlugin {
 
   Foswiki::Func::registerTagHandler('LISTY', \&LISTY);
+  Foswiki::Func::registerTagHandler('FAVBUTTON', \&FAVBUTTON);
 
-  Foswiki::Contrib::JsonRpcContrib::registerMethod("ListyPlugin", "saveListyItem", sub {
-    my $session = shift;
-    return getCore($session)->jsonRpcSaveListyItem(@_);
-  });
+  Foswiki::Contrib::JsonRpcContrib::registerMethod(
+    "ListyPlugin",
+    "saveListyItem",
+    sub {
+      my $session = shift;
+      return getCore($session)->jsonRpcSaveListyItem(@_);
+    }
+  );
 
-  Foswiki::Contrib::JsonRpcContrib::registerMethod("ListyPlugin", "deleteListyItem", sub {
-    my $session = shift;
-    return getCore($session)->jsonRpcDeleteListyItem(@_);
-  });
+  Foswiki::Contrib::JsonRpcContrib::registerMethod(
+    "ListyPlugin",
+    "deleteListyItem",
+    sub {
+      my $session = shift;
+      return getCore($session)->jsonRpcDeleteListyItem(@_);
+    }
+  );
 
-  Foswiki::Contrib::JsonRpcContrib::registerMethod("ListyPlugin", "saveListy", sub {
-    my $session = shift;
-    return getCore($session)->jsonRpcSaveListy(@_);
-  });
+  Foswiki::Contrib::JsonRpcContrib::registerMethod(
+    "ListyPlugin",
+    "saveListy",
+    sub {
+      my $session = shift;
+      return getCore($session)->jsonRpcSaveListy(@_);
+    }
+  );
+
+  Foswiki::Func::registerRESTHandler(
+    'importSideBar',
+    sub {
+      my $session = shift;
+      return getCore($session)->restImportSideBar(@_);
+    },
+    authenticate => 1,
+    validate => 0,
+    http_allow => 'GET,POST',
+  );
 
   if ($Foswiki::Plugins::VERSION > 2.0) {
     my $metaDataName = $Foswiki::cfg{ListyPlugin}{MetaData} || 'LISTY';
-    Foswiki::Meta::registerMETA($metaDataName, alias => lc($metaDataName), many => 1);
+    Foswiki::Func::registerMETA($metaDataName, alias => lc($metaDataName), many => 1);
   }
 
+  if ($Foswiki::cfg{Plugins}{SolrPlugin} && $Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
+    require Foswiki::Plugins::SolrPlugin;
+    Foswiki::Plugins::SolrPlugin::registerIndexTopicHandler(sub {
+      return getCore()->solrIndexTopicHandler(@_);
+    });
+  }
 
   return 1;
 }
@@ -86,7 +116,7 @@ sub finishPlugin {
 =cut
 
 sub getCore {
-  my $session = shift;
+  my $session = shift || $Foswiki::Plugins::SESSION;
 
   unless (defined $core) {
     require Foswiki::Plugins::ListyPlugin::Core;
@@ -111,5 +141,17 @@ sub LISTY {
   return getCore($session)->LISTY(@_);
 }
 
+=begin TML
+
+---++ FAVBUTTON($session, $params, $theTopic, $theWeb) -> $string
+
+stub for FAVBUTTON to initiate the core before handling the macro
+
+=cut
+
+sub FAVBUTTON {
+  my $session = shift;
+  return getCore($session)->FAVBUTTON(@_);
+}
 
 1;

@@ -89,3 +89,21 @@
   padding-left:0.5em;
   padding-right:0.5em;
 }
+
+.listyFavButton {
+  padding:3px;
+  text-decoration:none;
+}
+.listyFavButtonIcon {
+  width:1em;
+}
+.listyFavButtonLabel {
+  margin-left:0.7em;
+}
+.listyFavButtonNoLabel .listyFavButtonLabel,
+.listyFavButtonNoIcon .listyFavButtonIcon {
+  display:none;
+}
+.listyFavButtonNoLabel .listyFavButtonIcon {
+  padding:0;
+}

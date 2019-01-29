@@ -1,3 +1,4 @@
+!noci
 data/System/ListyPlugin.txt 0644
 lib/Foswiki/Plugins/ListyPlugin/Config.spec 0644
 lib/Foswiki/Plugins/ListyPlugin/Core.pm 0644
@@ -29,6 +30,12 @@ locale/ListyPlugin/zh-cn.po 0644
 locale/ListyPlugin/zh-tw.po 0644
 pub/System/ListyPlugin/i18n/de.js 0644
 pub/System/ListyPlugin/i18n/en.js 0644
+pub/System/ListyPlugin/i18n/fr.js 0644
+pub/System/ListyPlugin/i18n/it.js 0644
+pub/System/ListyPlugin/i18n/zh_TW.js 0644
+pub/System/ListyPlugin/jquery.favbutton.js 0644
+pub/System/ListyPlugin/jquery.favbutton.js.gz 0644
+pub/System/ListyPlugin/jquery.favbutton.uncompressed.js 0644
 pub/System/ListyPlugin/jquery.listy.css 0644
 pub/System/ListyPlugin/jquery.listy.css.gz 0644
 pub/System/ListyPlugin/jquery.listy.js 0644

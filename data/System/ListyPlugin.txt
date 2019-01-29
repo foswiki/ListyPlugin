@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="micha" comment="reprev" date="1443685357" format="1.1" reprev="10" version="10"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1548755206" format="1.1"  version="1"}%
 ---+!! %TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -22,7 +22,7 @@ same collection can be stored in separate topics.
 
 ---++ Usage
 
----+++ Simple
+---+++ Create a Listy
 
 Just type 
 
@@ -44,6 +44,17 @@ To store "My Links" of the currently logged in user, use:
 </verbatim>
 
 This will store the set of links organized by this widget into the user's profile page and have them in a "mylinks" collection.
+
+---+++ Favorites button
+
+The =%FAVBUTTON= macro lets add a topic to a listy. By default it adds the current topic to your "mylinks" collections (see above):
+
+<verbatim class="tml">
+%FAVBUTTON%
+</verbatim>
+
+Note that any "mylinks" listy on the same page will automatically be updated as you click on the favbutton. Clicking on it again
+will remove it from the listy again.
 
 ---+++ Scrum Board
 (with the help of [[Foswiki:Extensions/GridLayoutPlugin][GridLayoutPlugin]])
@@ -74,6 +85,62 @@ This will store the set of links organized by this widget into the user's profil
 This will display three listies next to each
 other, a "todo", an "inprogress" and a "done" listy. You will be able to create entries for each listy, assign them to one of the
 collections and move them around using drag and drop.
+
+---+++ Dynamic Listies
+
+Listy entries may be generated based on a query over topics, for instance topics that have some kind of =TaskForm= attached to it:
+
+<verbatim class="tml">
+| *Name*  | *Type* | *Size* | *Values* | *Description* | *Attributes* | *Default* |
+| Summary | text | 80 | | |  | |
+| Owner | text | 20 | | | | |
+| Status | radio | 5 | created, todo, inprogress, done | | | created |
+</verbatim>
+
+Tasks are created as part of a wiki application and them might be managed using a scrum board extending above example:
+
+<verbatim class="tml">
+%BEGINGRID{gutter="1" border="off"}%
+%BEGINCOL{"3"}%
+---++ Backlog
+%LISTY{"created" 
+   collections="created, todo, inprogress, done" 
+   type="query" 
+   query="form='TaskForm' AND ! Status=~'\b(todo|inprogress|done)\b'"
+   collection_formfield="Status"
+}%
+%BEGINCOL{"3"}%
+---++ Todo
+%LISTY{
+   "todo"
+   collections="created, todo, inprogress, done" 
+   type="query" 
+   query="form='TaskForm' AND Status='\btodo\b'"
+   collection_formfield="Status"
+}%
+%BEGINCOL{"3"}%
+---++ In progress
+%LISTY{
+   "inprogress" 
+   collections="created, todo, inprogress, done" 
+   type="query" 
+   query="form='TaskForm' AND Status='\binprogress\b'"
+   collection_formfield="Status"
+}%
+%BEGINCOL{"3"}%
+---++ Done
+%LISTY{
+   "done" 
+   collections="created, todo, inprogress, done" 
+   type="query" 
+   query="form='TaskForm' AND Status='\bdone\b'"
+   collection_formfield="Status"
+}%
+%ENDGRID%
+</verbatim>
+
+Note that each listy is of =type="query"= and thus prefilled by entries that refer to the found topics. The parameter =collection_formfield="Status"= then informs the listy
+to alter the =Status= formfield of the related topic while an entry is dragged from one listy to the next.
 
 ---+++ Custom formatting
 
@@ -107,17 +174,18 @@ renders each topic in a listy by displaying an image and part of its [[%SYSTEMWE
 
 ---++ Syntax
 
+---+++ LISTY
 =%<nop>LISTY{"&lt;collection>" ...}%=
 
 | *Parameter* | *Description* | *Default* |
-| =topic= | | =%<nop>BASETOPIC%= |
+| =topic= | location where all entries of this listy are stored | =%<nop>BASETOPIC%= |
 | =collection= | the collection ID, can be just any string; leave it empty to refer to the "default" collection | =&lt;empty>= |
 | =collections= | list of known collections stored at =topic=; this lets you move a listy item between collectiosn without having a drag'n drop | |
 | =collection_formfield= | name of a formfield to be altered when dragging topic listies among collections | |
 | =collection_value= | value to set a topic item's formfield to | collection |
 | =hidenull= | boolean flag to hide the listy when there are no items in it | =false= |
 | =showcollections= | boolean flag to show/hide the collections select box in the item editor | =true= |
-| =sort= | sort listies using the specified property; possible values are =index=, =title=, =summary=, =date= | =index= |
+| =sort= | sort listies using the specified property; possible values are =index=, =title=, =summary=, =date=, =topictitle= | =index= |
 | =reverse= | boolean flag to reverse the sorting order as specified in =sort= | =off= |
 | =types= | specify types of listy items, possible values are =topic=, =text=, =external= | =topic, text, external= |
 | =autosave= | boolean flag to enable/disable saving changes automatically on every action; if switched off you will need to hit the "save" button to make any changes to the listy permanent; if switched on (default) any change will be stored immediately | =true= |
@@ -165,6 +233,69 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 | =$listyID= | id of the current listy |
 | =$tml= | url-escaped TML used to render this listy; this is used to re-render the widget after an update |
 
+---+++ FAVBUTTON
+=%<nop>FAVBUTTON{...}=
+
+| *Parameter* | *Description* | *Default* |
+| ="..."= or =source= | topic to be added to the listy | current user's profile page |
+| =web=, =topic= | topic to be added to the list | current topic |
+| =collection= | name of the listy collection to add the favorite to | mylisty |
+| =favtext= | button text to be displayed when the source topic has not been favorited yet | %MAKETEXT{"Favorite"}% |
+| =favicon= | button icon | fa-star-o |
+| =favtitle= | button tooltip | %MAKETEXT{"Add to favorites"}% | 
+| =unfavtext= | button text to be displayed when the source topic has been favorited | %MAKETEXT{"Unavorite"}% |
+| =unfavicon= | button icon | fa-star |
+| =unfavtitle= | button tooltip | %MAKETEXT{"Remove from favorites"}% | 
+| =class= | css class to be added to the button element | |
+| =style= | css styles to be added to the button element | |
+| =animate= | animation to be added to the button, see [[%SYSTEMWEB%.VarJQICON]] | |
+| =showlabel= | boolean flag to show/hide the button label | on |
+| =showicon= | boolean flag to show/hide the button icon | on |
+
+Example:
+
+<verbatim class="tml">
+%FAVBUTTON{
+   showlabel="off"
+   favicon="fa-heart-o"
+   unfavicon="fa-heart"
+   class="foswikiLarge foswikiAlert"
+}%
+</verbatim>
+
+<div class="%IF{"not context ListyPluginEnabled" then="foswikiHidden"}%">
+%FAVBUTTON{
+   showlabel="off"
+   favicon="fa-thumbs-o-up"
+   unfavicon="fa-thumbs-up"
+   class="foswikiLarge foswikiAlert"
+}%
+</div>
+
+---++ Importing standard =...<nop>LeftBar= 
+
+A standard Foswiki installation using !PatternSkin allows to store a custom sidebar for each user into a separate =<nop>...LeftBar= topic for each user.
+These can be converted to a setup based on !ListyPlugin that stores those links into personal =mylinks= using a REST handler of the !ListyPlugin.
+Use the following commandline:
+
+<verbatim class="tml">
+cd <foswiki-directory>
+./rest /ListyPlugin/importSideBar param=value ...
+</verbatim>
+
+| *Parameter* | *Description* | *Default* |
+| =web= | user web to search for =...<nop>LeftBar= topics | %USERSWEB% | 
+| =suffix= | suffix of topics to search for | <nop>LeftBar |
+| =include= | regular expressions of topics to include in the conversion process | |
+| =exclude= | regular expressions of topics to prevent from being processed | |
+| =debug= | boolean flag to enable debug outout | off |
+| =verbose= | boolean flag to enable verbose progress output | off |
+| =target= | target web to store create listy entries | %USERSWEB% | 
+| =collection= | collection name to store entries to | mylinks |
+
+Note that the conversion process tries to clean up as good as possible entries in the ...<nop>LeftBar topics. However, as this is a free-form
+topic any kind of content may be found, only some of it may be converted into a listy. 
+
 ---++ Installation Instructions
 %$INSTALL_INSTRUCTIONS%
 
@@ -174,6 +305,10 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  29 Jan 2019: | added =%FAVBUTTON= macro; \
+                  added solr index handler to make individual listy entries searchable; \
+                  depend on !TopicTitlePlugin now | 
+|  02 Feb 2017: | added sidebar importer that allows to convert a <nop>WikiUserLeftBar to a listy |
 |  23 Jan 2017: | new features: populate listies using a search query; \
                   change formfields of a topic behind a listy item drag&droping them between listies | 
 |  22 Sep 2015: | first final relase |
@@ -187,7 +322,7 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ListyPlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2017 Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2019 Michael Daum http://michaeldaumconsulting.com"}%
 %META:FIELD{name="License" title="License" value="[[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]]"}%
 %META:FIELD{name="Home" title="Home" value="https://foswiki.org/Extensions/ListyPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/ListyPlugin"}%

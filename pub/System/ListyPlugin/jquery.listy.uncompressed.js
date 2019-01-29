@@ -1,7 +1,7 @@
 /*
- * jQuery listy plugin 4.00
+ * jQuery listy plugin 4.20
  *
- * (c)opyright 2011-2017 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2019 Michael Daum http://michaeldaumconsulting.com
  *
  * Dual licensed under the MIT and GPL licenses:
  *   http://www.opensource.org/licenses/mit-license.php
@@ -17,7 +17,6 @@
   var defaults = {
     debug: false
   },
-  allListies = {},
   saveInProgress;
 
   /***************************************************************************
@@ -27,25 +26,11 @@
     return $("<div/>").html(value).text();
   }
 
+  /* unused
   function entityEncode(value) {
     return $('<div/>').text(value).html();
-  } 
-
-  /***************************************************************************
-    * static: find listies of collection
-    */
-  function findListiesOfCollection(id) {
-    var listies = [];
-
-    $.each(allListies, function(index, item) {
-      if (item.opts.collection === id) {
-        listies.push(item);
-      }
-    });
-
-    return listies;
   }
-
+  */
 
   /***************************************************************************
    * class definition
@@ -61,7 +46,6 @@
     }
     self.init();
 
-    allListies[self.id] = self;
     //self.log("finished new()", self);
   }
 
@@ -74,7 +58,7 @@
     if (typeof(console) !== 'undefined' && self.opts.debug) {
       args = $.makeArray(arguments);
       args.unshift("LISTY: ");
-      console.log.apply(self, args);
+      console.log.apply(self, args); // eslint-disable-line no-console
     }
   };
 
@@ -128,11 +112,20 @@
       self.flagModified();
     });
 
+    $(document).on("changedCollection", function(ev, data) {
+      if (data.source === self.opts.source && 
+          data.collection === self.opts.collection) {
+
+        self.log("got a changedCollection event with data=",data);
+        self.flagModified();
+        self.reload();
+      }
+    });
+
     // init gui
     self.listyContainer.sortable({
       connectWith: ".jqListyEditable .jqListyContainer",
-      revert: true,
-      delay: 1,
+      //revert: true, /* SMELL: buggy - when the page scrolled the placeholder animates to a weird position */
       distance: 5,
       tolerance: "pointer",
       placeholder: "ui-sortable-placeholder jqListyPlaceholder",
@@ -150,7 +143,7 @@
         $item.addClass("jqListySelected");
       },
 
-      remove: function(event, ui) {
+      remove: function(/*event, ui*/) {
         //self.log("got a remove in " + self.id);
       },
 
@@ -181,7 +174,7 @@
       },
 
       update: function(event, ui) {
-        var sender = ui.sender
+        var sender = ui.sender;
 
         if (sender) {
           sender = sender.parent().data("listy");
@@ -199,7 +192,9 @@
           self.save().then(function() {
             var data, md5, senderMd5;
             if (sender) {
+self.reload(true);
               // check whether we need to reload this listy
+/*
               data = self.getItemData(ui.item.attr("id"));
               self.log("save initiated by sender ...",sender.id);
               md5 = self.elem.data("formatterMd5")[data.type];
@@ -210,6 +205,7 @@
               } else {
                 self.log("no need to reload a listy ... same formatter");
               }
+*/
             }
           });
         }
@@ -292,17 +288,23 @@
             },
             success: function() {
               //self.showMessage("info", "deleted item");
+              $(document).trigger("changedCollection", {
+                source: self.opts.source,
+                collection: self.opts.collection,
+                web: data.web,
+                topic: data.topic,
+                action: "delete"
+              });
+
               self.flagModified();
               self.reload();
             },
-            error: function(xhr, textStatus) {
+            error: function(xhr) {
               var msg = $.parseJSON(xhr.responseText).error.message;
               self.elem.unblock();
               self.showMessage("error", msg);
             }
           });
-        },
-        function(dialog) {
         }
       );
 
@@ -336,7 +338,7 @@
         methods: {
           renderCollections: function() {
             return self.renderCollections();
-          },
+          }
         }
         
       }).then(
@@ -347,30 +349,24 @@
                 self.elem.block({message:''});
               }
             },
-            success: function(json) {
-              var collection = json.result.collection,
-                  listies = findListiesOfCollection(collection);
+            success: function(/*json*/) {
+              $(document).trigger("changedCollection", {
+                source: self.opts.source,
+                collection: self.opts.collection,
+                web: data.web,
+                topic: data.topic,
+                action: "edit"
+              });
 
-              if (listies) {
-                $.each(listies, function(index, item) {
-                  if (item !== self) {
-                    item.flagModified();
-                    item.reload();
-                  }
-                });
-              } 
-
-              self.flagModified();
-              self.reload();
+              //self.flagModified();
+              //self.reload();
             },
-            error: function(xhr, textStatus) {
+            error: function(xhr) {
               var msg = $.parseJSON(xhr.responseText).error.message;
               self.elem.unblock();
               self.showMessage("error", msg);
             }
           });
-        },
-        function(dialog) {
         }
       );
 
@@ -380,9 +376,11 @@
     self.elem.find(".jqListyEdit").on("click", function() {
       var $this = $(this), $item = $this.parents("li:first");
       _editHandler($item);
+      return false;
     });
     self.elem.find(".jqListyContainer > li").on("dblclick", function() {
       _editHandler($(this));
+      return false;
     });
 
     // add button behavior
@@ -394,14 +392,18 @@
         index = "";
 
       if ($thisItem.length) {
-        thisIndex = self.getItemData($thisItem.attr("id")).index - 1
+        thisIndex = self.getItemData($thisItem.attr("id")).index - 1;
         if ($nextItem.length) {
           nextIndex = 
-          nextIndex = self.getItemData($nextItem.attr("id")).index - 1
+          nextIndex = self.getItemData($nextItem.attr("id")).index - 1;
         } else {
           nextIndex = thisIndex + 2;
         }
         index = (nextIndex - thisIndex) / 2 + thisIndex;
+      } else {
+        if ($this.is(".top")) {
+          index = 0.5;
+        }
       }
 
       self.dialog({
@@ -425,35 +427,30 @@
         methods: {
           renderCollections: function() {
             return self.renderCollections();
-          },
+          }
         }
         
       }).then(
         function(dialog) {
           $(dialog).children("form").ajaxSubmit({
-            success: function(json) {
-              var collection = json.result.collection,
-                  listies = findListiesOfCollection(collection);
+            success: function(/*json*/) {
 
-              if (listies) {
-                $.each(listies, function(index, item) {
-                  if (item.id !== self.id) {
-                    item.flagModified();
-                    item.reload();
-                  }
-                });
-              } 
+              $(document).trigger("changedCollection", {
+                source: self.opts.source,
+                collection: self.opts.collection,
+		web: foswiki.getPreference("WEB"),
+		topic: foswiki.getPreference("TOPIC"),
+                action: "add"
+              });
 
-              self.flagModified();
-              self.reload();
+              //self.flagModified();
+              //self.reload();
             },
-            error: function(xhr, textStatus) {
+            error: function(xhr) {
               var msg = $.parseJSON(xhr.responseText).error.message;
               self.showMessage("error", msg);
             }
           });
-        },
-        function(dialog) {
         }
       );
       
@@ -604,10 +601,9 @@
           self.elem.block({message:''});
         }
       },
-      success: function(data, textStatus, xhr) {
+      success: function(data) {
 
         /* destroy self */
-        delete allListies[self.id];
         self.elem.find(".jqListyTml").remove();
         self.elem.replaceWith(data); // SMELL
 
@@ -620,9 +616,9 @@
         }
         //self.showMessage("info", "reloaded "+self.opts.collection);
       },
-      error: function(xhr, textStatus) {
+      error: function(xhr) {
         var msg;
-        if (xhr.status != 404) {
+        if (xhr.status !== 404) {
           msg = $.parseJSON(xhr.responseText).error.message;
         } else {
           msg = xhr.status + " " + xhr.statusText;
@@ -680,7 +676,7 @@
         }
 */
      },
-      success: function(json, textStatus, xhr) {
+      success: function(/*json*/) {
         // reload of listy collections of the same topic
         var nextId = Object.keys(self.affected)[0],
             nextListy;
@@ -702,7 +698,7 @@
         //self.showMessage("success", "saved into collection '" + self.opts.collection+'"');
         saveInProgress = undefined;
       },
-      error: function(json, textStatus, xhr) {
+      error: function(json) {
         self.elem.unblock();
         self.showMessage("error", json.error.message);
         saveInProgress = undefined;
@@ -715,7 +711,7 @@
    */
   Listy.prototype.isEqual = function(other) {
     var self = this;
-    return (self.opts.source == other.opts.source && self.opts.collection == other.opts.collection);
+    return (self.opts.source === other.opts.source && self.opts.collection === other.opts.collection);
   };
 
   /*****************************************************************************
@@ -793,7 +789,7 @@
               return false;
             }
           }],
-          open: function(ev) {
+          open: function() {
             var $this = $(this),
               title = $this.data("title");
 
@@ -804,7 +800,7 @@
             $this.find("input").on("keydown", function(ev) {
               var $input = $(this);
               if (!$input.is(".ui-autocomplete-input") || !$input.data("ui-autocomplete").menu.element.is(":visible")) {
-                if (ev.keyCode == 13) {
+                if (ev.keyCode === 13) {
                   ev.preventDefault();
                   $this.dialog("close");
                   dfd.resolve($this[0]);
@@ -812,13 +808,9 @@
               }
             });
 
-            window.setTimeout(function() {
-              $this.dialog({position: {my:'center', at:'center', of:window}});
-            }, 100);
-
             opts.open.call(self, this, opts.data);
           },
-          close: function(event, ui) {
+          close: function() {
             $(this).remove();
           },
           show: 'fade',

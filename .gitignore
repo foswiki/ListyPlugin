@@ -2,6 +2,7 @@
 *.gz
 *.swp
 pub/System/ListyPlugin/jquery.listy.js
+pub/System/ListyPlugin/jquery.favbutton.js
 pub/System/ListyPlugin/jquery.listy.css
 /ListyPlugin.md5
 /ListyPlugin.sha1
@@ -10,3 +11,4 @@ pub/System/ListyPlugin/jquery.listy.css
 /ListyPlugin.zip
 /ListyPlugin_installer
 /ListyPlugin_installer.pl
+locale/**/*mo

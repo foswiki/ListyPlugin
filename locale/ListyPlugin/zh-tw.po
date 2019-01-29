@@ -5,12 +5,12 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Foswiki $Id\n"
-"Report-Msgid-Bugs-To: foswiki-svn@lists.sourceforge.net\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "PO-Revision-Date: 2016-12-27 08:20+0200\n"
 "Last-Translator: CH yang <dr3939@gmail.com>\n"
-"Language-Team: Traditional Chinese "
-"<http://translate.foswiki.org/projects/foswiki/distribution-master/zh_TW/>\n"
+"Language-Team: Traditional Chinese <http://translate.foswiki.org/projects/"
+"foswiki/distribution-master/zh_TW/>\n"
 "Language: zh-tw\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -20,35 +20,39 @@ msgstr ""
 "X-Poedit-Country: Taiwan\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: templates/listyplugin.tmpl:219
+#: templates/listyplugin.tmpl:220
 msgid "Add a description for this item."
 msgstr "為這個項目增加一個說明。"
 
-#: templates/listyplugin.tmpl:94
+#: templates/listyplugin.tmpl:95
 msgid "Add an item"
 msgstr "增加一個項目"
 
-#: templates/listyplugin.tmpl:42
+#: templates/listyplugin.tmpl:43
 msgid "Add item"
 msgstr "增加項目"
 
-#: templates/listyplugin.tmpl:45
+#: data/System/ListyPlugin.txt:245 lib/Foswiki/Plugins/ListyPlugin/Core.pm:449
+msgid "Add to favorites"
+msgstr ""
+
+#: templates/listyplugin.tmpl:46
 msgid "Append an item to the list"
 msgstr "為這個清單添加一個項目"
 
-#: templates/listyplugin.tmpl:78
+#: templates/listyplugin.tmpl:79
 msgid "Are you sure that you want to delete %1?"
 msgstr "請確認您要刪除 %1 ？"
 
-#: templates/listyplugin.tmpl:226
+#: templates/listyplugin.tmpl:227
 msgid "Collection"
 msgstr "集合"
 
-#: templates/listyplugin.tmpl:187
+#: templates/listyplugin.tmpl:188
 msgid "Customize the text of this item."
 msgstr "設定這個項目的文字。"
 
-#: templates/listyplugin.tmpl:73
+#: templates/listyplugin.tmpl:74
 msgid "Delete Item"
 msgstr "刪除項目"
 
@@ -56,58 +60,74 @@ msgstr "刪除項目"
 msgid "Delete this item"
 msgstr "刪除這個項目"
 
-#: templates/listyplugin.tmpl:134 templates/listyplugin.tmpl:20
+#: templates/listyplugin.tmpl:135 templates/listyplugin.tmpl:20
 msgid "Edit this item"
 msgstr "編輯這個項目"
 
-#: templates/listyplugin.tmpl:177
+#: templates/listyplugin.tmpl:178
 msgid "External"
 msgstr "外部"
+
+#: data/System/ListyPlugin.txt:243 lib/Foswiki/Plugins/ListyPlugin/Core.pm:447
+msgid "Favorite"
+msgstr ""
 
 #: templates/listyplugin.tmpl:21
 msgid "Insert a new item here"
 msgstr "在此插入一個新的項目"
 
-#: templates/listyplugin.tmpl:64
+#: data/System/ListyPlugin.txt:248 lib/Foswiki/Plugins/ListyPlugin/Core.pm:457
+msgid "Remove from favorites"
+msgstr ""
+
+#: templates/listyplugin.tmpl:65
 msgid "Revert changes"
 msgstr "還原變更"
 
-#: templates/listyplugin.tmpl:67
+#: templates/listyplugin.tmpl:68
 msgid "Revert sorting order to its initial state"
 msgstr "還原排序至初始狀態"
 
-#: templates/listyplugin.tmpl:53
+#: templates/listyplugin.tmpl:54
 msgid "Save changes"
 msgstr "儲存變更"
 
-#: templates/listyplugin.tmpl:56
+#: templates/listyplugin.tmpl:57
 msgid "Save sorting order"
 msgstr "儲存排序"
 
-#: templates/listyplugin.tmpl:228
+#: templates/listyplugin.tmpl:229
 msgid "Select the collection to hold the item."
 msgstr "選擇這個集合以保留此項目。"
 
-#: templates/listyplugin.tmpl:217
+#: templates/listyplugin.tmpl:218
 msgid "Summary"
 msgstr "總結"
 
-#: templates/listyplugin.tmpl:167
+#: templates/listyplugin.tmpl:168
 msgid "Text"
 msgstr "內容"
 
-#: templates/listyplugin.tmpl:185
+#: templates/listyplugin.tmpl:186
 msgid "Title"
 msgstr "標題"
 
-#: templates/listyplugin.tmpl:172 templates/listyplugin.tmpl:201
+#: templates/listyplugin.tmpl:173 templates/listyplugin.tmpl:202
 msgid "Topic"
 msgstr "主題"
 
-#: templates/listyplugin.tmpl:209
+#: templates/listyplugin.tmpl:210
 msgid "URL"
 msgstr "網址"
 
-#: templates/listyplugin.tmpl:197
+#: data/System/ListyPlugin.txt:246
+msgid "Unavorite"
+msgstr ""
+
+#: lib/Foswiki/Plugins/ListyPlugin/Core.pm:455
+msgid "Unfavorite"
+msgstr ""
+
+#: templates/listyplugin.tmpl:198
 msgid "Web"
 msgstr "子網"
