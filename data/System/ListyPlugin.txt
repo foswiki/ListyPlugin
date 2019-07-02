@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1548755206" format="1.1"  version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1562054825" format="1.1"  version="1"}%
 ---+!! %TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -305,6 +305,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  01 Jul 2019: | fixes along the new tabpane api; recording author, modification date, create author and create date now |
 |  29 Jan 2019: | added =%FAVBUTTON= macro; \
                   added solr index handler to make individual listy entries searchable; \
                   depend on !TopicTitlePlugin now | 

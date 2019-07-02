@@ -256,6 +256,14 @@ sub LISTY {
     $itemFormat = Foswiki::Func::decodeFormatTokens($itemFormat);
     $itemFormat = Foswiki::Func::expandCommonVariables($itemFormat, $topic, $web);
 
+    my $author = $item->{author};
+    $author = 'unknown' unless defined $author;
+    $author = Foswiki::Func::getWikiName($author);
+
+    my $createAuthor = $item->{createauthor};
+    $createAuthor = 'unknown' unless defined $createAuthor;
+    $createAuthor = Foswiki::Func::getWikiName($createAuthor);
+
     my $line = $this->{format};
     
     $line =~ s/\$item\b/$itemFormat/g;
@@ -269,6 +277,8 @@ sub LISTY {
     $line =~ s/\$web\b/$web/g;
     $line =~ s/\$name\b/$item->{name}/g;
     $line =~ s/\$summary\b/$summary/g;
+    $line =~ s/\$author\b/$author/g;
+    $line =~ s/\$createauthor\b/$createAuthor/g;
     $line =~ s/\$json\b/$this->_formatAsJson($item)/ge;
     push @results, $line;
   }
@@ -781,6 +791,9 @@ sub createNewListy {
 
   return {
     date => time(),
+    author => Foswiki::Func::getCanonicalUserID(),
+    createdate => time(),
+    createauthor => Foswiki::Func::getCanonicalUserID(),
     name => "id".int(rand(1000)).time(),
     collection => $collection,
     index => $this->getMaxIndex($meta, $collection),
@@ -797,8 +810,11 @@ sub _getListyFromRequest {
   return unless defined ($name);
 
   my $item = {
-    date => time(),
     name => $name,
+    date => time(),
+    author => Foswiki::Func::getCanonicalUserID(),
+    createdate => time(),
+    createauthor => Foswiki::Func::getCanonicalUserID(),
     collection => _entityDecode($request->param("collection")),
     summary => _entityDecode($request->param("summary")),
     title => _entityDecode($request->param("title")),
@@ -823,11 +839,17 @@ sub _getListyFromTopic {
 
   my $summary = $meta->get("FIELD", "Summary");
   $summary = $summary->{value} if defined $summary;
+
   my $title = $meta->get("FIELD", "TopicTitle") || $meta->getPreference("TOPICTITLE");
   $title = $title->{value} if defined $title;
 
+  my ($createDate, $createAuthor) = Foswiki::Func::getRevisionInfo($web, $topic, 1);
+
   my $item = {
     date => $info->{date},
+    author => $info->{author} || 'unknown',
+    createdate => $createDate,
+    createauthor => Foswiki::Func::getCanonicalUserID($createAuthor),
     name => "id".int(rand(1000)).time(),
     collection => undef,
     summary => $summary,
@@ -857,6 +879,7 @@ sub _getListyFromJson {
   }
 
   $item->{date} = time();
+  $item->{author} = Foswiki::Func::getCanonicalUserID();
   $item->{name} = $name;
 
   #print STDERR "after json:".dump($item)."\n";
@@ -879,6 +902,9 @@ sub _mergeListies {
   } elsif ($targetListy->{type} eq 'external') {
     $targetListy->{url} = $sourceListy->{url} unless defined $targetListy->{url};
   }
+
+  $targetListy->{createdate} = $sourceListy->{createdate} || 0;
+  $targetListy->{createauthor} = $sourceListy->{createauthor} || 'unknown';
 
   return $targetListy;
 }
@@ -1308,7 +1334,6 @@ sub solrIndexTopicHandler {
     # index -> field_Index_d
 
     # set doc fields
-    my $date = Foswiki::Func::formatTime($item->{date}, 'iso', 'gmtime');
 
     my $webtopic = "$web.$topic";
     $webtopic =~ s/\//./g;
@@ -1330,16 +1355,17 @@ sub solrIndexTopicHandler {
       'web' => $web,
       'topic' => $topic,
       'webtopic' => $webtopic,
-      'date' => $date,
       'title' => $title,
       'text' => $item->{summary},
       'url' => $url,
 
-      ### TODO missing
-      # 'author' => $item->{author},
-      # 'contributor' => $item->{author},
-      # 'createauthor' => $item->{createauthor},
-      # 'createdate' => $item->{createdate},
+      'date' => Foswiki::Func::formatTime($item->{date}, 'iso', 'gmtime'),
+      'author' => $item->{author},
+      'author_title' => Foswiki::Func::getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{author} || 'unknown'),
+      'createauthor' => $item->{createauthor},
+      'createauthor_title' => Foswiki::Func::getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{createauthor} || 'unknown'),
+      'createdate' => Foswiki::Time::formatTime($item->{createdate} || 0, '$iso', 'gmtime'),
+       #'contributor' => $item->{author},
 
       'container_id' => $web . '.' . $topic,
       'container_web' => $web,
@@ -1352,7 +1378,7 @@ sub solrIndexTopicHandler {
       'field_Topic_s' => $item->{topic},
       'field_Type_s' => $item->{type},
       'field_URL_s' => $item->{url},
-      'field_Index_d' => $item->{index},
+      'field_Index_d' => $item->{index} || 0,
       'field_TopicType_lst' => 'Listy',
     );
 

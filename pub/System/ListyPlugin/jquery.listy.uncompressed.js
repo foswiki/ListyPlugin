@@ -3,9 +3,7 @@
  *
  * (c)opyright 2011-2019 Michael Daum http://michaeldaumconsulting.com
  *
- * Dual licensed under the MIT and GPL licenses:
- *   http://www.opensource.org/licenses/mit-license.php
- *   http://www.gnu.org/licenses/gpl.html
+ * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
  */
 "use strict";
@@ -192,7 +190,7 @@
           self.save().then(function() {
             var data, md5, senderMd5;
             if (sender) {
-self.reload(true);
+              self.reload(true);
               // check whether we need to reload this listy
 /*
               data = self.getItemData(ui.item.attr("id"));
@@ -317,7 +315,8 @@ self.reload(true);
           data = self.getItemData(name),
           url = foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
             load: "listyplugin",
-            showcollections: self.opts.showCollections
+            showcollections: self.opts.showCollections,
+            topic: foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
           });
 
       self.dialog({
@@ -402,7 +401,11 @@ self.reload(true);
         index = (nextIndex - thisIndex) / 2 + thisIndex;
       } else {
         if ($this.is(".top")) {
-          index = 0.5;
+          $thisItem = self.listyContainer.find("> li:first");
+          if ($thisItem.length) {
+          thisIndex = self.getItemData($thisItem.attr("id")).index;
+          index = thisIndex-1;
+          }
         }
       }
 
@@ -410,7 +413,8 @@ self.reload(true);
         url: foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
           load: "listyplugin",
           showcollections: self.opts.showCollections,
-          types: self.opts.itemTypes
+          types: self.opts.itemTypes,
+          topic: foswiki.getPreference("WEB")+"."+foswiki.getPreference("TOPIC")
         }),
         name: "listy::additem",
         data: {
@@ -438,8 +442,8 @@ self.reload(true);
               $(document).trigger("changedCollection", {
                 source: self.opts.source,
                 collection: self.opts.collection,
-		web: foswiki.getPreference("WEB"),
-		topic: foswiki.getPreference("TOPIC"),
+                web: foswiki.getPreference("WEB"),
+                topic: foswiki.getPreference("TOPIC"),
                 action: "add"
               });
 
@@ -593,7 +597,7 @@ self.reload(true);
       type: "post",
       dataType: "html",
       data: {
-        topic: foswiki.getPreference("WEB") + "/" + foswiki.getPreference("TOPIC"),
+        topic: foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
         text: self.listyTml
       },
       beforeSend: function() {
@@ -721,7 +725,8 @@ self.reload(true);
     var self = this,
       defaults = {
         url: foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
-          load: "listyplugin"
+          load: "listyplugin",
+          topic: foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
         }),
         name: undefined,
         title: $.i18n("Confirmation required"),

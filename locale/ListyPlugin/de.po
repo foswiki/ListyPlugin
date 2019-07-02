@@ -35,7 +35,7 @@ msgstr "Eintrag an die Liste anhängen"
 
 #: templates/listyplugin.tmpl:79
 msgid "Are you sure that you want to delete %1?"
-msgstr "Sind Sie sicher, dass Sie diesen Eintrag löschen wollen? %BR% %2"
+msgstr "Sind Sie sicher, dass Sie %1 löschen wollen?"
 
 #: templates/listyplugin.tmpl:227
 msgid "Collection"
@@ -43,7 +43,7 @@ msgstr "Sammlung"
 
 #: templates/listyplugin.tmpl:188
 msgid "Customize the text of this item."
-msgstr "Geben Sie dem Verweis einen eigenen Titel."
+msgstr "Geben Sie den Titel dieses Eintrags an."
 
 #: templates/listyplugin.tmpl:74
 msgid "Delete Item"

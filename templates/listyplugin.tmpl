@@ -76,7 +76,7 @@ $topbuttons<ul class='jqListyContainer'>
 <input type="hidden" name="collection" value="{{:collection}}" />
 <input type="hidden" name="name" value="{{:name}}" />
 <input type="hidden" name="topic" value="{{:source}}" />
-%MAKETEXT{"Are you sure that you want to delete [_1]?" args="%BR% <b>{{:title}}</b>"}%
+%MAKETEXT{"Are you sure that you want to delete [_1]?" args="<p class='foswikiBold'>{{:title}}</p>"}%
 </form>
 </div>%TMPL:END%
 
@@ -165,17 +165,17 @@ $topbuttons<ul class='jqListyContainer'>
 <!-- -->%TMPL:END%
 
 %TMPL:DEF{"listy::editor::typestep::text"}%<!-- -->
-%TAB{"%MAKETEXT{"Text"}%" id="text" after="jQuery('#'+newTabId).parents('form').find('input[name=type]').val('text');" }%
+%TAB{"%MAKETEXT{"Text"}%" id="text" after="this.elem.parents('form').find('input[name=type]').val('text');" }%
 %TMPL:P{"listy::editor::textstep"}%
 %ENDTAB%%TMPL:END%
 
 %TMPL:DEF{"listy::editor::typestep::topic"}%<!-- -->
-%TAB{"%MAKETEXT{"Topic"}%" id="topic" after="jQuery('#'+newTabId).parents('form').find('input[name=type]').val('topic');" }%
+%TAB{"%MAKETEXT{"Topic"}%" id="topic" after="this.elem.parents('form').find('input[name=type]').val('topic');" }%
 %TMPL:P{"listy::editor::topicstep"}%
 %ENDTAB%%TMPL:END%
 
 %TMPL:DEF{"listy::editor::typestep::external"}%<!-- -->
-%TAB{"%MAKETEXT{"External"}%" id="external" after="jQuery('#'+newTabId).parents('form').find('input[name=type]').val('external');" }%
+%TAB{"%MAKETEXT{"External"}%" id="external" after="this.elem.parents('form').find('input[name=type]').val('external');" }%
 %TMPL:P{"listy::editor::externalstep"}%
 %ENDTAB%%TMPL:END%
 
