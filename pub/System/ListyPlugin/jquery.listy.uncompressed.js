@@ -1,7 +1,7 @@
 /*
- * jQuery listy plugin 4.20
+ * jQuery listy plugin 6.00
  *
- * (c)opyright 2011-2019 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2022 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -13,22 +13,10 @@
    * globals
    */
   var defaults = {
-    debug: false
+    debug: false,
+    updateWidth: true
   },
   saveInProgress;
-
-  /***************************************************************************
-   * static tools
-   */
-  function entityDecode(value) {
-    return $("<div/>").html(value).text();
-  }
-
-  /* unused
-  function entityEncode(value) {
-    return $('<div/>').text(value).html();
-  }
-  */
 
   /***************************************************************************
    * class definition
@@ -87,26 +75,39 @@
    * init listy instance
    */
   Listy.prototype.init = function() {
-    var self = this;
+    var self = this, html;
 
     // attach to dom
     self.id = self.elem.attr("id");
     self.addButton = self.elem.find(".jqListyAdd");
     self.revertButton = self.elem.find(".jqListyRevert");
     self.saveButton = self.elem.find(".jqListySave");
-    self.listyTml = entityDecode(self.elem.find(".jqListyTml").html());
+    try {
+      html = self.elem.find(".jqListyParams").html();
+      if (html) {
+        self.listyParams = JSON.parse(html);
+      }
+    } catch (error) {
+      console.error("failed to parse json listy params",html);
+      //console.error(error);
+    };
+
     self.listyContainer = self.elem.find(".jqListyContainer");
 
     // bind internal functions to events
-    self.elem.bind("reload.listy", function() {
+    self.elem.on("refresh.listy", function() {
+      self.updateWidth();
+    });
+
+    self.elem.on("reload.listy", function() {
       self.reload();
     });
 
-    self.elem.bind("save.listy", function() {
+    self.elem.on("save.listy", function() {
       self.save();
     });
 
-    self.elem.bind("modified.listy", function() {
+    self.elem.on("modified.listy", function() {
       self.flagModified();
     });
 
@@ -142,7 +143,7 @@
       },
 
       remove: function(/*event, ui*/) {
-        //self.log("got a remove in " + self.id);
+        self.log("got a remove in " + self.id);
       },
 
       receive: function(event, ui) {
@@ -190,7 +191,7 @@
           self.save().then(function() {
             var data, md5, senderMd5;
             if (sender) {
-              self.reload(true);
+              self.reload(); 
               // check whether we need to reload this listy
 /*
               data = self.getItemData(ui.item.attr("id"));
@@ -249,13 +250,13 @@
     });
 
     // revert button behavior
-    self.revertButton.click(function() {
+    self.revertButton.on("click", function() {
       self.reload();
       return false;
     });
 
     // save button behavior
-    self.saveButton.click(function() {
+    self.saveButton.on("click", function() {
       self.save();
       return false;
     });
@@ -298,7 +299,7 @@
               self.reload();
             },
             error: function(xhr) {
-              var msg = $.parseJSON(xhr.responseText).error.message;
+              var msg = JSON.parse(xhr.responseText).error.message;
               self.elem.unblock();
               self.showMessage("error", msg);
             }
@@ -361,7 +362,7 @@
               //self.reload();
             },
             error: function(xhr) {
-              var msg = $.parseJSON(xhr.responseText).error.message;
+              var msg = JSON.parse(xhr.responseText).error.message;
               self.elem.unblock();
               self.showMessage("error", msg);
             }
@@ -376,10 +377,12 @@
       var $this = $(this), $item = $this.parents("li:first");
       _editHandler($item);
       return false;
-    });
-    self.elem.find(".jqListyContainer > li").on("dblclick", function() {
-      _editHandler($(this));
-      return false;
+    }).each(function() {
+      var $this = $(this);
+      $this.parent().parent().on("dblclick", function() {
+        _editHandler($(this));
+        return false;
+      });
     });
 
     // add button behavior
@@ -424,7 +427,7 @@
           summary: "",
           title: "",
           web: foswiki.getPreference("WEB"),
-          topic: foswiki.getPreference("TOPIC"),
+          topic: "",
           url: "",
           index: index
         },
@@ -451,7 +454,7 @@
               //self.reload();
             },
             error: function(xhr) {
-              var msg = $.parseJSON(xhr.responseText).error.message;
+              var msg = JSON.parse(xhr.responseText).error.message;
               self.showMessage("error", msg);
             }
           });
@@ -471,7 +474,7 @@
         data = {};
 
     self.elem.find("#"+name+" .jqListyData").each(function() {
-      data = $.extend(data, $.parseJSON($(this).html()));
+      data = $.extend(data, JSON.parse($(this).html()));
     });
 
     if (typeof(data[name]) === 'undefined') {
@@ -546,6 +549,10 @@
   Listy.prototype.updateWidth = function() {
     var self = this;
 
+    if (!self.opts.updateWidth) {
+      return;
+    }
+
     self.elem.css("min-width", "");
     window.setTimeout(function() {
       self.elem.css("min-width", self.elem.css("width"));
@@ -569,7 +576,7 @@
    * reload listy
    */
   Listy.prototype.reload = function(dontPropagate) {
-    var self = this;
+    var self = this, params;
 
     if (saveInProgress) {
       //self.log("there is a save in progress ... waiting for it to finish");
@@ -580,8 +587,8 @@
 
     self.log("reloading ",self.id,"dontPropagate=",dontPropagate);
 
-    if (!self.listyTml) {
-      self.log("hm, ... no listyTml");
+    if (!self.listyParams) {
+      self.log("hm, ... no listyParams");
       return $.Deferred().resolve().promise();
     }
 
@@ -592,14 +599,17 @@
 
     self.unflagModified();
 
+    params = $.extend({
+      "name": "LISTY",
+      "web": foswiki.getPreference("WEB"),
+      "topic": foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
+      "render": "on"
+    }, self.listyParams); // deep copy
+
     return $.ajax({
-      url: foswiki.getScriptUrl("rest", "RenderPlugin", "render"),
-      type: "post",
-      dataType: "html",
-      data: {
-        topic: foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
-        text: self.listyTml
-      },
+      url: foswiki.getScriptUrl("rest", "RenderPlugin", "tag"),
+      type: "POST",
+      data: params,
       beforeSend: function() {
         if (!self.elem.data("blockUI.isBlocked")) {
           self.elem.block({message:''});
@@ -619,11 +629,18 @@
           self.affected = {};
         }
         //self.showMessage("info", "reloaded "+self.opts.collection);
+        $(document).trigger("reloaded", {
+          source: self.opts.source,
+          collection: self.opts.collection,
+          web: data.web,
+          topic: data.topic,
+          action: "reload"
+        });
       },
       error: function(xhr) {
         var msg;
         if (xhr.status !== 404) {
-          msg = $.parseJSON(xhr.responseText).error.message;
+          msg = JSON.parse(xhr.responseText).error.message;
         } else {
           msg = xhr.status + " " + xhr.statusText;
         }
@@ -664,7 +681,7 @@
     }, self.opts);
 
     self.elem.find(".jqListyData").each(function() {
-      $.extend(params, $.parseJSON($(this).html()));
+      $.extend(params, JSON.parse($(this).html()));
     });
 
     //self.log("params=", params);
@@ -813,7 +830,12 @@
               }
             });
 
+
+            // continue
             opts.open.call(self, this, opts.data);
+          },
+          focus: function(ev, ui) {
+            $(this).find(".listyFocus:first").focus();
           },
           close: function() {
             $(this).remove();

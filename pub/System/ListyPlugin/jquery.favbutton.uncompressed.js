@@ -1,7 +1,7 @@
 /*
- * jQuery favbutton plugin 1.00
+ * jQuery favbutton plugin 1.10
  *
- * (c)opyright 2017-2019 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2017-2022 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -109,7 +109,7 @@
           method: "saveListyItem",
           params: {
             name: "",
-            index: "",
+            index: "-1",
             type: "topic", 
             topic: self.opts.source,
             collection: self.opts.collection,

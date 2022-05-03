@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2019 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2022 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,9 +27,10 @@ use warnings;
 use Foswiki::Func ();
 use Foswiki::Plugins ();
 use Foswiki::Contrib::JsonRpcContrib ();
+use Foswiki::Plugins::RenderPlugin ();
 
-our $VERSION = '3.10';
-our $RELEASE = '02 Jul 2019';
+our $VERSION = '4.00';
+our $RELEASE = '03 May 2022';
 our $SHORTDESCRIPTION = 'Fancy list manager';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;
@@ -86,7 +87,12 @@ sub initPlugin {
 
   if ($Foswiki::Plugins::VERSION > 2.0) {
     my $metaDataName = $Foswiki::cfg{ListyPlugin}{MetaData} || 'LISTY';
-    Foswiki::Func::registerMETA($metaDataName, alias => lc($metaDataName), many => 1);
+    Foswiki::Func::registerMETA($metaDataName, 
+      alias => lc($metaDataName), 
+      many => 1,
+      ignoreSolrIndex => 1, # prevent MetaDataPlugin from indexing LISTY metadata as we index it by ourselves
+      form => $Foswiki::cfg{SystemWebName}.".ListyForm"
+    );
   }
 
   if ($Foswiki::cfg{Plugins}{SolrPlugin} && $Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
@@ -95,6 +101,9 @@ sub initPlugin {
       return getCore()->solrIndexTopicHandler(@_);
     });
   }
+
+  # rest handler required for javascript metadata view interface
+  Foswiki::Plugins::RenderPlugin::registerAllowedTag("LISTY");
 
   return 1;
 }

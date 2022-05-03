@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2019 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2022 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -135,6 +135,7 @@ sub LISTY {
   $theSort = "index" if !defined($theSort) || $theSort !~ /^(index|title|summary|date|topictitle)$/;
 
   my $theTypes = $params->{type} || $params->{types} ||'text, topic, external';
+  my $theShowTools = Foswiki::Func::isTrue($params->{showtools}, 1);
 
   my %types = map {$_ => 1} split(/\s*,\s*/, $theTypes);
   my $theAutoSave = Foswiki::Func::isTrue($params->{autosave}, 1) ? 'true':'false';
@@ -174,9 +175,6 @@ sub LISTY {
     @listyItems = $this->getListyItems($theWeb, $theTopic);
   }
 
-  my %allCollections = ();
-  $allCollections{$_->{collection}||''} = 1 foreach @listyItems;
-
   @listyItems = grep {$_->{collection} eq $theCollection} grep {$types{$_->{type}}} @listyItems;
 
   my %order = ();
@@ -206,7 +204,7 @@ sub LISTY {
   #print STDERR "listy ($theSort, $theCollection): ".join(',', map {"title=$_->{title}, index=$_->{index}"} @listyItems)."\n";
 
   my $allowChange = (Foswiki::Func::checkAccessPermission('CHANGE', $wikiName, undef, $theTopic, $theWeb));
-  my $itemTools = $allowChange?$this->{itemTools}:'';
+  my $itemTools = $allowChange && $theShowTools?$this->{itemTools}:'';
   
   my @results = ();
   foreach my $item (@listyItems) {
@@ -253,8 +251,6 @@ sub LISTY {
     my $title = getListyItemTitle($item);
 
     my $itemFormat = $this->_getFormatOfType($params, $item->{type});
-    $itemFormat = Foswiki::Func::decodeFormatTokens($itemFormat);
-    $itemFormat = Foswiki::Func::expandCommonVariables($itemFormat, $topic, $web);
 
     my $author = $item->{author};
     $author = 'unknown' unless defined $author;
@@ -280,6 +276,9 @@ sub LISTY {
     $line =~ s/\$author\b/$author/g;
     $line =~ s/\$createauthor\b/$createAuthor/g;
     $line =~ s/\$json\b/$this->_formatAsJson($item)/ge;
+
+    #$line = Foswiki::Func::decodeFormatTokens($line);
+    #$line = Foswiki::Func::expandCommonVariables($line, $topic, $web) if $line =~ /%/;
     push @results, $line;
   }
 
@@ -323,9 +322,16 @@ sub LISTY {
     $style = "style='width:$width'";
   }
 
-  my $class = $params->{class} || '';
+  my $updateWidth = Foswiki::Func::isTrue($params->{updatewidth}, 1)? "true":"false";
 
-  my $result = $this->{header}.join("\n", @results).$this->{footer};
+  my $class = $params->{class} || '';
+  my $header = $params->{header} // '';
+  my $footer = $params->{footer} // '';
+
+  my $result = $this->{header}.  join("\n", @results). $this->{footer};
+
+  $result =~ s/\$header\b/$header/g;
+  $result =~ s/\$footer\b/$footer/g;
   $result =~ s/\$tools\b/$itemTools/g;
   $result =~ s/\$buttons\b/$buttons/g;
   $result =~ s/\$topbuttons\b/$topButtons/g;
@@ -341,6 +347,7 @@ sub LISTY {
   $result =~ s/\$count\b/$count/g;
   $result =~ s/\$style\b/$style/g;
   $result =~ s/\$class\b/$class/g;
+  $result =~ s/\$updateWidth\b/$updateWidth/g;
 
   my @md5 = ();
   foreach my $type (keys %types) {
@@ -348,11 +355,16 @@ sub LISTY {
     push @md5, '"'.$type.'":"'.md5_hex($format).'"';
   }
   my $html5Data = "data-formatter-md5='{".join(", ", @md5)."}'" ;
+
   $result =~ s/\$html5data/$html5Data/g;
 
-  my $allCollections = defined($theCollections)?$theCollections:join(",", sort keys %allCollections);
-  $result =~ s/\$allcollections/$allCollections/g;
 
+  if ($result =~ /\$allcollections\b/) {
+    my %allCollections = ();
+    $allCollections{$_->{collection}||''} = 1 foreach @listyItems;
+    my $allCollections = defined($theCollections)?$theCollections:join(",", sort keys %allCollections);
+    $result =~ s/\$allcollections\b/$allCollections/g;
+  }
 
   #writeDebug("all collections in $theWeb.$theTopic: $allCollections");
 
@@ -360,7 +372,7 @@ sub LISTY {
   $result =~ s/\$listyId/$listyId/g;
 
   # only add the gui if we are allowed to make changes
-  my $origTml = '';
+  my $jsonParams = '';
   if ($allowChange) {
     Foswiki::Plugins::JQueryPlugin::createPlugin("i18n");
     Foswiki::Plugins::JQueryPlugin::createPlugin("ui");
@@ -372,11 +384,11 @@ sub LISTY {
     Foswiki::Plugins::JQueryPlugin::createPlugin("tabpane");
     Foswiki::Plugins::JQueryPlugin::createPlugin("render");
     Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::RENDER, JQUERYPLUGIN::I18N");
-<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
+<script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
 HERE
 
-    $origTml = _entityEncode('%LISTY{'.$params->stringify.'}%');
-    $origTml = '<div class="jqListyTml" style="display:none">'.$origTml.'</div>';
+    $jsonParams = $this->_paramsToJson($params);
+    $jsonParams = "<script type='application/json' class='jqListyParams'><literal>".$jsonParams.'</literal></script>';
   }
 
   Foswiki::Func::addToZone("head", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::UI");
@@ -390,11 +402,15 @@ HERE
   my $messageFile = $Foswiki::cfg{PubDir} . '/' . $messagePath;
   if (-f $messageFile) {
       Foswiki::Func::addToZone('script', "LISTYPLUGIN::I8N", <<"HERE", 'JQUERYPLUGIN::I18N');
-<script type='application/l10n' data-i18n-language='$langTag' data-i18n-namespace='LISTY' src='$Foswiki::cfg{PubUrlPath}/$messagePath'></script>
+<script type='application/l10n' data-i18n-language='$langTag' data-i18n-namespace='LISTY' data-i18n-src='$Foswiki::cfg{PubUrlPath}/$messagePath'></script>
 HERE
   }
 
-  $result =~ s/\$tml\b/$origTml/g;
+  $result = Foswiki::Func::decodeFormatTokens($result);
+  $result = Foswiki::Func::expandCommonVariables($result, $topic, $web) if $result =~ /%/;
+
+  # finally
+  $result =~ s/\$params\b/$jsonParams/g;
 
   return $result;
 }
@@ -442,7 +458,7 @@ sub FAVBUTTON {
   Foswiki::Plugins::JQueryPlugin::createPlugin("jsonrpc");
 
   Foswiki::Func::addToZone("script", "LISTY::FAVBUTTON", <<'HERE', "JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::I18N");
-<script type="text/javascript" src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.favbutton.js"></script> 
+<script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.favbutton.js"></script> 
 HERE
 
   my $source = $params->{_DEFAULT} || $params->{source} || "$Foswiki::cfg{UsersWebName}.$wikiName";
@@ -454,17 +470,17 @@ HERE
 
   my $collection = $params->{collection} || "mylinks";
 
-  my $favtext = $params->{favtext} || '%MAKETEXT{"Favorite"}%';
-  my $favicon = $params->{favicon} || 'fa-star-o';
-  my $favtitle = $params->{favtitle} || '%MAKETEXT{"Add to favorites"}%';
+  my $favtext = $params->{favtext} // '%MAKETEXT{"Favorite"}%';
+  my $favicon = $params->{favicon} // 'fa-star-o';
+  my $favtitle = $params->{favtitle} // '%MAKETEXT{"Add to favorites"}%';
   my $animate = $params->{animate};
 
   my @class = ();
   push @class, $params->{class} if defined $params->{class};
 
-  my $unfavtext = $params->{unfavtext} || '%MAKETEXT{"Unfavorite"}%';
-  my $unfavicon = $params->{unfavicon} || 'fa-star';
-  my $unfavtitle = $params->{unfavtitle} || '%MAKETEXT{"Remove from favorites"}%';
+  my $unfavtext = $params->{unfavtext} // '%MAKETEXT{"Unfavorite"}%';
+  my $unfavicon = $params->{unfavicon} // 'fa-star';
+  my $unfavtitle = $params->{unfavtitle} // '%MAKETEXT{"Remove from favorites"}%';
 
   $favicon = '%JQICON{"'.$favicon.'"'.(defined $animate?" animate=\"$animate\"":'').'}%' if $favicon =~ /^[a-z\-_]+$/i;
   $unfavicon = '%JQICON{"'.$unfavicon.'"'.(defined $animate?" animate=\"$animate\"":'').'}%' if $unfavicon =~ /^[a-z\-_]+$/i;
@@ -560,6 +576,22 @@ sub json {
   return $this->{json};
 }
 
+sub _paramsToJson {
+  my ($this, $params) = @_;
+
+  my %res = ();
+  while (my ($k, $v) = each %$params) {
+    next if $k =~ /^_/;
+    next unless $k =~ /^[a-z0-9A-Z_]+$/;
+    $res{$k} = $v;
+  }
+  $res{collection} //= $params->{_DEFAULT};
+
+  #print STDERR "json params=".dump(\%res)."\n";
+
+  return $this->json->encode(\%res);
+}
+
 sub _formatAsJson {
   my ($this, $item) = @_;
 
@@ -591,15 +623,26 @@ sub _entityDecode {
 
 =begin TML
 
----++ getListyItems($web, $topic, $meta) -> @listyItems
+---++ getListyItems(...) -> @listyItems
 
 returns all listy items stored in the given topic
+
+this function can be called in three different ways:
+
+   * $this->getListyItems($meta)
+   * $this->getListyItems($web, $topic) ... or
+   * $this->getListyItems($web, $topic, $meta)
 
 =cut
 
 sub getListyItems {
   my ($this, $web, $topic, $meta) = @_;
 
+  if (ref($web) && !defined($topic) && !defined($meta)) {
+    $meta = $web;
+    $web = $meta->web;
+    $topic = $meta->topic;
+  }
   #writeDebug("getListyItems($web, $topic)");
 
   ($meta) = Foswiki::Func::readTopic($web, $topic) unless $meta;
@@ -670,7 +713,7 @@ sub getListyItemsByDBQuery {
   my $i = 0;
   while (my $obj = $hits->next) {
     my $t = $obj->fastget("topic");
-    my $item = _getListyFromTopic($web, $t);
+    my $item = _getListyFromDB($web, $t, $db);
     if (defined $item) {
       $item->{index} = $i;
       $item->{type} = 'query';
@@ -780,10 +823,41 @@ sub jsonRpcSaveListyItem {
   }
 
   $meta->putKeyed($this->{metaDataName}, $newListy);
+  $this->normalizeListyIndex($meta, $newListy->{collection});
 
   Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
 
   return $newListy;
+}
+
+sub normalizeListyIndex {
+  my ($this, $meta, $collection) = @_;
+  
+  unless (defined $collection) {
+    foreach my $col ($this->getCollections($meta)) {
+      $this->normalizeListyIndex($meta, $col);
+    }
+    return;
+  }
+
+  my @items = 
+    sort {$a->{index} <=> $b->{index}} 
+    grep {$_->{collection} eq $collection} 
+    $this->getListyItems($meta);
+
+  my $index = 0;
+  foreach my $item (@items) {
+    $item->{index} = $index++
+  }
+}
+
+sub getCollections {
+  my ($this, $meta) = @_;
+
+  my %collections = ();
+  $collections{$_->{collection}||''} = 1 foreach $this->getListyItems($meta);
+
+  return keys %collections;
 }
 
 sub createNewListy {
@@ -830,6 +904,27 @@ sub _getListyFromRequest {
   return $item;
 }
 
+sub _getListyFromDB {
+  my ($web, $topic, $db) = @_;
+
+  my $obj = $db->fastget($topic);
+  my $date = $obj->get('info.date');
+  my $author = $obj->get('info.author');
+
+  my $item = {
+    date => $date,
+    author => $author || 'unknown',
+    name => "id".int(rand(1000)).time(),
+    collection => "",
+    web => $web,
+    topic => $topic,
+    type => "topic",
+    index => 0,
+  };
+
+  return $item;
+}
+
 sub _getListyFromTopic {
   my ($web, $topic, $meta) = @_;
 
@@ -837,23 +932,11 @@ sub _getListyFromTopic {
 
   my $info = $meta->getRevisionInfo();
 
-  my $summary = $meta->get("FIELD", "Summary");
-  $summary = $summary->{value} if defined $summary;
-
-  my $title = $meta->get("FIELD", "TopicTitle") || $meta->getPreference("TOPICTITLE");
-  $title = $title->{value} if defined $title;
-
-  my ($createDate, $createAuthor) = Foswiki::Func::getRevisionInfo($web, $topic, 1);
-
   my $item = {
     date => $info->{date},
     author => $info->{author} || 'unknown',
-    createdate => $createDate,
-    createauthor => Foswiki::Func::getCanonicalUserID($createAuthor),
     name => "id".int(rand(1000)).time(),
-    collection => undef,
-    summary => $summary,
-    title => $title,
+    collection => "",
     web => $web,
     topic => $topic,
     type => "topic",
@@ -1038,11 +1121,11 @@ sub jsonRpcSaveListy {
   foreach my $item ($meta->find($this->{metaDataName})) {
     next if $seen{$item->{name}} || $item->{collection} ne $collection;
 
-    writeDebug("removing listy name=$item->{name}, ".
-               "url=".($item->{url}||'').", ".
-               "web=".($item->{web}||'').", ".
-               "topic=".($item->{topic}||'').", ".
-               "title=$item->{title} from collection=$item->{collection}");
+#    writeDebug("removing listy name=$item->{name}, ".
+#               "url=".($item->{url}||'').", ".
+#               "web=".($item->{web}||'').", ".
+#               "topic=".($item->{topic}||'').", ".
+#               "title=$item->{title} from collection=$item->{collection}");
 
     $meta->remove($this->{metaDataName}, $item->{name});
   }
@@ -1292,15 +1375,12 @@ sub _isEqualListy {
 sub listyExists {
   my ($this, $meta, $listy, $list) = @_;
 
-  my $web = $meta->web;
-  my $topic = $meta->topic;
   $list ||= $this->getListyItems($meta);
 
   foreach my $item (@$list) {
     return 1 if _isEqualListy($item, $listy);
     #print STDERR "listies differ\n".dump($listy)."\n".dump($item)."\n";
   }
-
 
   return 0;
 }
@@ -1344,6 +1424,8 @@ sub solrIndexTopicHandler {
     my $title = getListyItemTitle($item);
     $title = $this->{session}->renderer->TML2PlainText($title, undef, "showvar");
 
+    my $summary = $indexer->plainify($item->{summary}, $web, $topic);
+
     # index this listy
     my $listyDoc = $indexer->newDocument();
     $listyDoc->add_fields(
@@ -1356,28 +1438,30 @@ sub solrIndexTopicHandler {
       'topic' => $topic,
       'webtopic' => $webtopic,
       'title' => $title,
-      'text' => $item->{summary},
+      'text' => $summary,
       'url' => $url,
 
       'date' => Foswiki::Func::formatTime($item->{date}, 'iso', 'gmtime'),
-      'author' => $item->{author},
+      'date_s' => Foswiki::Func::formatTime($item->{date}),
+      'author' => $item->{author} || 'unknown',
       'author_title' => Foswiki::Func::getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{author} || 'unknown'),
-      'createauthor' => $item->{createauthor},
+      'createauthor' => $item->{createauthor} || 'unknown',
       'createauthor_title' => Foswiki::Func::getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{createauthor} || 'unknown'),
       'createdate' => Foswiki::Time::formatTime($item->{createdate} || 0, '$iso', 'gmtime'),
+      'createdate_s' => Foswiki::Time::formatTime($item->{createdate} || 0),
        #'contributor' => $item->{author},
-
+ 
       'container_id' => $web . '.' . $topic,
       'container_web' => $web,
       'container_topic' => $topic,
       'container_url' => Foswiki::Func::getViewUrl($web, $topic),
       'container_title' => Foswiki::Func::getTopicTitle($web, $topic, undef, $meta),
-
-      'field_Collection_s' => $item->{collection},
-      'field_Web_s' => $item->{web},
-      'field_Topic_s' => $item->{topic},
-      'field_Type_s' => $item->{type},
-      'field_URL_s' => $item->{url},
+ 
+      'field_Collection_s' => $item->{collection} // '',
+      'field_Web_s' => $item->{web} // '',
+      'field_Topic_s' => $item->{topic} // '',
+      'field_Type_s' => $item->{type} // '',
+      'field_URL_s' => $item->{url} // '',
       'field_Index_d' => $item->{index} || 0,
       'field_TopicType_lst' => 'Listy',
     );
@@ -1392,7 +1476,7 @@ sub solrIndexTopicHandler {
 
     # add to topic doc
     $doc->add_fields('catchall' => $item->{title}) if $item->{title};
-    $doc->add_fields('catchall' => $item->{summary}) if $item->{summary};
+    $doc->add_fields('catchall' => $summary) if $summary;
 
     # add extra fields, i.e. ACLs
     $doc->add_fields(@aclFields) if @aclFields;

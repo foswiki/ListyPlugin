@@ -63,7 +63,7 @@ msgstr "Extern"
 
 #: data/System/ListyPlugin.txt:243 lib/Foswiki/Plugins/ListyPlugin/Core.pm:447
 msgid "Favorite"
-msgstr "Favorisieren"
+msgstr "Merken"
 
 #: templates/listyplugin.tmpl:21
 msgid "Insert a new item here"
@@ -119,7 +119,7 @@ msgstr "Defavorisieren"
 
 #: lib/Foswiki/Plugins/ListyPlugin/Core.pm:455
 msgid "Unfavorite"
-msgstr "Defavorisieren"
+msgstr "Vergessen"
 
 #: templates/listyplugin.tmpl:198
 msgid "Web"

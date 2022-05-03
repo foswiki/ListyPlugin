@@ -191,7 +191,9 @@ renders each topic in a listy by displaying an image and part of its [[%SYSTEMWE
 | =autosave= | boolean flag to enable/disable saving changes automatically on every action; if switched off you will need to hit the "save" button to make any changes to the listy permanent; if switched on (default) any change will be stored immediately | =true= |
 | =format=, =topic_format=, =text_format=, =external_format= | format string of listy items; there are a number of variables to be used in the format (see below) | defined in =listyplugin.tmpl= |
 | =buttons= | specify where the UI buttons are located; possible values are =top=, =bottom=, =both= and =off= | =bottom= |
+| =showtools= | boolean flag to enable/disable the edit tools of a listy item | =true= |
 | =width= | width of listy widget, e.g. =width="500px" | |
+| =updatewidth= | boolean flag to enable/disable remembering the initial minimum width when the listy was rendered | =true= |
 | =class= | additional css class to be added to the listy widget | |
 | =query= | search query for topics to pre-fill a listy with items; this is either a normal [[%SYSTEMWEB%.QuerySearch][QuerySearch]] or a query using Foswiki:Extensions/DBCachePlugin in case it is installed | |
 
@@ -231,7 +233,7 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 | =$class= | extra class |
 | =$allcollections= | list of collections known by the current listy |
 | =$listyID= | id of the current listy |
-| =$tml= | url-escaped TML used to render this listy; this is used to re-render the widget after an update |
+| =$params= | json section holding all params that have been used to render this listy |
 
 ---+++ FAVBUTTON
 =%<nop>FAVBUTTON{...}=
@@ -305,6 +307,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  03 May 2022: | using =tag= REST handler of !RenderPlugin now |
 |  01 Jul 2019: | fixes along the new tabpane api; recording author, modification date, create author and create date now |
 |  29 Jan 2019: | added =%FAVBUTTON= macro; \
                   added solr index handler to make individual listy entries searchable; \
@@ -323,7 +326,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ListyPlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2019 Michael Daum http://michaeldaumconsulting.com"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2022 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="[[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]]"}%
 %META:FIELD{name="Home" title="Home" value="https://foswiki.org/Extensions/ListyPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/ListyPlugin"}%
