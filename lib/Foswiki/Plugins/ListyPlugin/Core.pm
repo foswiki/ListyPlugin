@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2022 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2024 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@ use warnings;
 
 use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Contrib::JsonRpcContrib::Error ();
+use Foswiki::Contrib::MailerContrib ();
 use Foswiki::Func ();
 use Error qw(:try);
 use JSON ();
@@ -33,32 +34,6 @@ use Digest::MD5 qw(md5_hex);
 #use Data::Dump qw(dump);
 
 use constant TRACE => 0; # toggle me
-
-=begin TML
-
----++ writeDebug($message)
-
-prints a debug message to STDERR when this module is in TRACE mode
-
-=cut
-
-sub writeDebug {
-  return unless TRACE;
-  #Foswiki::Func::writeDebug("ListyPlugin::Core - $_[0]");
-  print STDERR "ListyPlugin::Core - $_[0]\n";
-}
-
-=begin TML
-
----++ inlineError($text) -> $html
-
-formats an inline error message
-
-=cut
-
-sub inlineError {
-  return "<span class='foswikiAlert'>".$_[0]."</span>";
-}
 
 =begin TML
 
@@ -152,12 +127,15 @@ sub LISTY {
   my @listyItems = ();
 
   my $theQuery = $params->{query};
+  my $context = Foswiki::Func::getContext();
+  my $theQueryType = $params->{querytype} // $context->{DBCachePluginEnabled} ? "dbquery" : "search";
   if ($theQuery) {
-
     $types{query} = 1; # add query type
 
     # get listies by converting a topic search result to appropriate structures
-    if (Foswiki::Func::getContext()->{DBCachePluginEnabled}) {
+    if ($theQueryType eq 'solr' && $context->{SolrPluginEnabled}) {
+      @listyItems = $this->getListyItemsBySolr($theWeb, $theTopic, $theQuery);
+    } elsif ($theQueryType eq 'dbquery' && $context->{DBCachePluginEnabled}) {
       @listyItems = $this->getListyItemsByDBQuery($theWeb, $theTopic, $theQuery);
     } else {
       @listyItems = $this->getListyItemsByQuery($theWeb, $theTopic, $theQuery);
@@ -248,7 +226,7 @@ sub LISTY {
       $class .= ' jqListyItemText';
     }
 
-    my $title = getListyItemTitle($item);
+    my $title = $this->getListyItemTitle($item);
 
     my $itemFormat = $this->_getFormatOfType($params, $item->{type});
 
@@ -289,11 +267,10 @@ sub LISTY {
     push @results, "<!-- -->";
   }
 
-
   my $topButtons = '';
   my $bottomButtons = '';
   my $buttons = '';
-  if (!Foswiki::Func::getContext()->{static} && $allowChange && !defined($theQuery)) {
+  if (!$context->{static} && $allowChange && !defined($theQuery)) {
     $buttons = Foswiki::Func::expandTemplate("listy::buttons");
   }
 
@@ -358,7 +335,6 @@ sub LISTY {
 
   $result =~ s/\$html5data/$html5Data/g;
 
-
   if ($result =~ /\$allcollections\b/) {
     my %allCollections = ();
     $allCollections{$_->{collection}||''} = 1 foreach @listyItems;
@@ -372,38 +348,12 @@ sub LISTY {
   $result =~ s/\$listyId/$listyId/g;
 
   # only add the gui if we are allowed to make changes
+  Foswiki::Plugins::JQueryPlugin::createPlugin("listy");
+
   my $jsonParams = '';
   if ($allowChange) {
-    Foswiki::Plugins::JQueryPlugin::createPlugin("i18n");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("ui");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("hoverIntent");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("jsonrpc");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("form");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("pnotify");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("blockui");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("tabpane");
-    Foswiki::Plugins::JQueryPlugin::createPlugin("render");
-    Foswiki::Func::addToZone("script", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::PNOTIFY, JQUERYPLUGIN::UI, JQUERYPLUGIN::HOVERINTENT, JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::FORM, JQUERYPLUGIN::BLOCKUI, JQUERYPLUGIN::RENDER, JQUERYPLUGIN::I18N");
-<script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.js"></script> 
-HERE
-
     $jsonParams = $this->_paramsToJson($params);
     $jsonParams = "<script type='application/json' class='jqListyParams'><literal>".$jsonParams.'</literal></script>';
-  }
-
-  Foswiki::Func::addToZone("head", "LISTY::PLUGIN", <<'HERE', "JQUERYPLUGIN::UI");
-<link rel="stylesheet" href="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.listy.css" media="all" />
-HERE
-
-  # open matching localization file if it exists
-  my $langTag = $this->{session}->i18n->language();
-
-  my $messagePath = $Foswiki::cfg{SystemWebName} .'/ListyPlugin/i18n/' . $langTag . '.js';
-  my $messageFile = $Foswiki::cfg{PubDir} . '/' . $messagePath;
-  if (-f $messageFile) {
-      Foswiki::Func::addToZone('script', "LISTYPLUGIN::I8N", <<"HERE", 'JQUERYPLUGIN::I18N');
-<script type='application/l10n' data-i18n-language='$langTag' data-i18n-namespace='LISTY' data-i18n-src='$Foswiki::cfg{PubUrlPath}/$messagePath'></script>
-HERE
   }
 
   $result = Foswiki::Func::decodeFormatTokens($result);
@@ -424,16 +374,16 @@ returns the title of a listy item depending on its type
 =cut
 
 sub getListyItemTitle {
-  my ($item) = @_;
+  my ($this, $item) = @_;
 
   my $title = "";
 
   if ($item->{type} eq 'topic') {
-    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web}, $item->{topic});
+    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web} || $this->{baseWeb}, $item->{topic});
   } elsif ($item->{type} eq 'external') {
     $title = $item->{title} || $item->{url};
   } elsif ($item->{type} eq 'query') {
-    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web}, $item->{topic});
+    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web} || $this->{baseWeb}, $item->{topic});
   } else {
     $title = $item->{title};
   }
@@ -454,12 +404,7 @@ sub FAVBUTTON {
 
   my $wikiName = Foswiki::Func::getWikiName();
 
-  Foswiki::Plugins::JQueryPlugin::createPlugin("i18n");
-  Foswiki::Plugins::JQueryPlugin::createPlugin("jsonrpc");
-
-  Foswiki::Func::addToZone("script", "LISTY::FAVBUTTON", <<'HERE', "JQUERYPLUGIN::JSONRPC, JQUERYPLUGIN::I18N");
-<script src="%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/jquery.favbutton.js"></script> 
-HERE
+  Foswiki::Plugins::JQueryPlugin::createPlugin("Listy");
 
   my $source = $params->{_DEFAULT} || $params->{source} || "$Foswiki::cfg{UsersWebName}.$wikiName";
   my ($sourceWeb, $sourceTopic) = Foswiki::Func::normalizeWebTopicName(undef, $source);
@@ -481,6 +426,7 @@ HERE
   my $unfavtext = $params->{unfavtext} // '%MAKETEXT{"Unfavorite"}%';
   my $unfavicon = $params->{unfavicon} // 'fa-star';
   my $unfavtitle = $params->{unfavtitle} // '%MAKETEXT{"Remove from favorites"}%';
+  my $autoSubscribe = Foswiki::Func::isTrue($params->{autosubscribe}, 1) ? 'true':'false';
 
   $favicon = '%JQICON{"'.$favicon.'"'.(defined $animate?" animate=\"$animate\"":'').'}%' if $favicon =~ /^[a-z\-_]+$/i;
   $unfavicon = '%JQICON{"'.$unfavicon.'"'.(defined $animate?" animate=\"$animate\"":'').'}%' if $unfavicon =~ /^[a-z\-_]+$/i;
@@ -523,6 +469,7 @@ HERE
   $result =~ s/\$text\b/$text/g;
   $result =~ s/\$icon\b/$icon/g;
   $result =~ s/\$title\b/$title/g;
+  $result =~ s/\$autosubscribe\b/$autoSubscribe/g;
 
   $result =~ s/\$class\b/$class/g;
   $result =~ s/\$source\b/$source/g;
@@ -693,6 +640,63 @@ sub getListyItemsByQuery {
 
 =begin TML
 
+---++ getListyItemsBySolr($web, $topic, $query) -> @listyItems
+
+returns a list of items by solr query
+
+=cut
+
+sub getListyItemsBySolr {
+  my ($this, $web, $topic, $query) = @_;
+
+  writeDebug("getListyItemsBySolr($web, $topic, $query)");
+
+  require Foswiki::Plugins::SolrPlugin;
+  my $searcher = Foswiki::Plugins::SolrPlugin::getSearcher($this->{session});
+
+  my @listyItems = ();
+  my $i = 0;
+  $searcher->iterate({ 
+    q => $query, 
+    fq => ["type:topic"],
+    fl => "web, topic, author, date, field_TopicType_s"
+  } , sub {
+    my $doc = shift;
+
+    my $item = _getListyFromSolr($doc);
+    if (defined $item) {
+      $item->{index} = $i;
+      $item->{type} = 'query';
+      push @listyItems, $item;
+    }
+
+    $i++;
+
+    return 1;
+  });
+
+  writeDebug("found $i");
+
+  return @listyItems;
+}
+
+sub _getListyFromSolr {
+  my $doc = shift;
+
+  return {
+    date => $doc->value_for("date"),
+    author => $doc->value_for("author") || 'unknown',
+    name => "id".int(rand(1000)).time(),
+    collection => "",
+    web => $doc->value_for("web"),
+    topic => $doc->value_for("topic"),
+    type => "topic",
+    index => 0,
+  };
+}
+
+=begin TML
+
 ---++ getListyItemsByDBQuery($web, $topic, $query) -> @listyItems
 
 returns a list of items by query
@@ -702,7 +706,7 @@ returns a list of items by query
 sub getListyItemsByDBQuery {
   my ($this, $web, $topic, $query) = @_;
 
-  writeDebug("getListyItemsDBByQuery($web, $topic, $query)");
+  writeDebug("getListyItemsByDBQuery($web, $topic, $query)");
   my @listyItems = ();
 
   require Foswiki::Plugins::DBCachePlugin;
@@ -826,6 +830,13 @@ sub jsonRpcSaveListyItem {
   $this->normalizeListyIndex($meta, $newListy->{collection});
 
   Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
+
+  if ($newListy->{type} eq "topic") {
+    my $subscribe = $request->param("subscribe");
+    if (defined $subscribe) {
+      $this->subscribe($newListy->{web}, $newListy->{topic}, $subscribe);
+    }
+  }
 
   return $newListy;
 }
@@ -1025,7 +1036,32 @@ sub jsonRpcDeleteListyItem {
 
   Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
 
+  if ($item->{type} eq 'topic') {
+    my $subscribe = $request->param("subscribe");
+    if (defined $subscribe) {
+      $this->subscribe($item->{web}, $item->{topic}, $subscribe);
+    }
+  }
+
   return;
+}
+
+sub subscribe {
+  my ($this, $web, $topic, $state) = @_;
+
+  my $wikiName = Foswiki::Func::getWikiName();
+
+  throw Error::Simple($this->{session}->i18n->maketext("Topic does not exist")) 
+    unless Foswiki::Func::topicExists($web, $topic);
+
+  throw Error::Simple($this->{session}->i18n->maketext("Bad subscriber"))
+    if $wikiName eq $Foswiki::cfg{DefaultUserWikiName};
+
+  if (Foswiki::Func::isTrue($state)) {
+    Foswiki::Contrib::MailerContrib::changeSubscription($web, $wikiName, $topic);
+  } else {
+    Foswiki::Contrib::MailerContrib::changeSubscription($web, $wikiName, $topic, "-");
+  }
 }
 
 =begin TML
@@ -1144,7 +1180,6 @@ sub jsonRpcSaveListy {
 
   return;
 }
-
 
 =begin TML
 
@@ -1389,7 +1424,7 @@ sub solrIndexTopicHandler {
   my ($this, $indexer, $doc, $web, $topic, $meta, $text) = @_;
 
   # delete all previous comments of this topic
-  $indexer->deleteByQuery("type:metadata form:Listy web:$web topic:$topic");
+  #$indexer->deleteByQuery("type:metadata form:Listy web:$web topic:$topic");
 
   my @listyItems = $this->getListyItems($web, $topic, $meta);
   return unless @listyItems;
@@ -1421,7 +1456,7 @@ sub solrIndexTopicHandler {
 
     my $url = $indexer->getScriptUrlPath($web, $topic, 'view'); # TODO: let's have an url to display one listy
 
-    my $title = getListyItemTitle($item);
+    my $title = $this->getListyItemTitle($item);
     $title = $this->{session}->renderer->TML2PlainText($title, undef, "showvar");
 
     my $summary = $indexer->plainify($item->{summary}, $web, $topic);
@@ -1464,10 +1499,14 @@ sub solrIndexTopicHandler {
       'field_URL_s' => $item->{url} // '',
       'field_Index_d' => $item->{index} || 0,
       'field_TopicType_lst' => 'Listy',
+
     );
 
+    # TODO 
+    # augment outgoing field of item content, i.e. topic listies
+
     my $contentLanguage = $indexer->getContentLanguage($web, $topic);
-    if (defined $contentLanguage && $contentLanguage ne 'detect') {
+    if (defined $contentLanguage && $contentLanguage ne 'detect' && $item->{text}) {
       $listyDoc->add_fields(
         language => $contentLanguage,
         'text_' . $contentLanguage => $item->{text},
@@ -1493,6 +1532,32 @@ sub solrIndexTopicHandler {
       $indexer->log("ERROR: " . $e->{-text});
     };
   }
+}
+
+=begin TML
+
+---++ writeDebug($message)
+
+prints a debug message to STDERR when this module is in TRACE mode
+
+=cut
+
+sub writeDebug {
+  return unless TRACE;
+  #Foswiki::Func::writeDebug("ListyPlugin::Core - $_[0]");
+  print STDERR "ListyPlugin::Core - $_[0]\n";
+}
+
+=begin TML
+
+---++ inlineError($text) -> $html
+
+formats an inline error message
+
+=cut
+
+sub inlineError {
+  return "<span class='foswikiAlert'>".$_[0]."</span>";
 }
 
 1;

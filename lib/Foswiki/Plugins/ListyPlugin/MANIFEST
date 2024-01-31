@@ -1,9 +1,10 @@
 !noci
-data/System/ListyPlugin.txt 0644
 data/System/ListyForm.txt 0644
+data/System/ListyPlugin.txt 0644
 lib/Foswiki/Plugins/ListyPlugin/Config.spec 0644
 lib/Foswiki/Plugins/ListyPlugin/Core.pm 0644
 lib/Foswiki/Plugins/ListyPlugin/DEPENDENCIES 0644
+lib/Foswiki/Plugins/ListyPlugin/JQuery.pm 0644
 lib/Foswiki/Plugins/ListyPlugin.pm 0644
 locale/ListyPlugin/bg.po 0644
 locale/ListyPlugin/cs.po 0644

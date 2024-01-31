@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2022 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2024 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,15 +26,16 @@ use warnings;
 
 use Foswiki::Func ();
 use Foswiki::Plugins ();
+use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Contrib::JsonRpcContrib ();
 use Foswiki::Plugins::RenderPlugin ();
 
-our $VERSION = '4.00';
-our $RELEASE = '03 May 2022';
+our $VERSION = '5.00';
+our $RELEASE = '%$RELEASE%';
 our $SHORTDESCRIPTION = 'Fancy list manager';
+our $LICENSECODE = '%$LICENSECODE%';
 our $NO_PREFS_IN_TOPIC = 1;
 our $core;
-
 
 =begin TML
 
@@ -44,8 +45,15 @@ our $core;
 
 sub initPlugin {
 
-  Foswiki::Func::registerTagHandler('LISTY', \&LISTY);
-  Foswiki::Func::registerTagHandler('FAVBUTTON', \&FAVBUTTON);
+  Foswiki::Plugins::JQueryPlugin::registerPlugin("Listy", 'Foswiki::Plugins::ListyPlugin::JQuery');
+  
+  Foswiki::Func::registerTagHandler('LISTY', sub {
+    return getCore(shift)->LISTY(@_);
+  });
+
+  Foswiki::Func::registerTagHandler('FAVBUTTON', sub {
+    return getCore(shift)->FAVBUTTON(@_);
+  });
 
   Foswiki::Contrib::JsonRpcContrib::registerMethod(
     "ListyPlugin",
@@ -95,7 +103,7 @@ sub initPlugin {
     );
   }
 
-  if ($Foswiki::cfg{Plugins}{SolrPlugin} && $Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
+  if (exists $Foswiki::cfg{Plugins}{SolrPlugin} && $Foswiki::cfg{Plugins}{SolrPlugin}{Enabled}) {
     require Foswiki::Plugins::SolrPlugin;
     Foswiki::Plugins::SolrPlugin::registerIndexTopicHandler(sub {
       return getCore()->solrIndexTopicHandler(@_);
@@ -135,32 +143,6 @@ sub getCore {
   }
 
   return $core;
-}
-
-=begin TML
-
----++ LISTY($session, $params, $theTopic, $theWeb) -> $string
-
-stub for LISTY to initiate the core before handling the macro
-
-=cut
-
-sub LISTY {
-  my $session = shift;
-  return getCore($session)->LISTY(@_);
-}
-
-=begin TML
-
----++ FAVBUTTON($session, $params, $theTopic, $theWeb) -> $string
-
-stub for FAVBUTTON to initiate the core before handling the macro
-
-=cut
-
-sub FAVBUTTON {
-  my $session = shift;
-  return getCore($session)->FAVBUTTON(@_);
 }
 
 1;

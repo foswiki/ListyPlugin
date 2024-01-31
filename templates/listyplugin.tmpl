@@ -232,7 +232,7 @@ $header $topbuttons<ul class='jqListyContainer'>
 %TMPL:DEF{"listy::editor::collectionstep::hidden"}%<input type="hidden" name="collection" value="{{:collection}}" />%TMPL:END%
 
 %{ listy favbutton - format}%
-%TMPL:DEF{"listy::favbutton"}%<a href="#" $style class="jqFavButton listyFavButton $class" title="$title" rel="nofollow" data-is-favorite="$state" data-web="$favweb" data-topic="$favtopic" data-name="$name" data-collection="$collection" data-source="$source" data-favtext="$percntENCODE{$favtext}$percnt" data-unfavtext="$percntENCODE{$unfavtext}$percnt" data-favicon="$percntENCODE{$favicon}$percnt" data-unfavicon="$percntENCODE{$unfavicon}$percnt" data-favtitle="$percntENCODE{$favtitle}$percnt" data-unfavtitle="$percntENCODE{$unfavtitle}$percnt"><span class="listyFavButtonIcon">$icon</span><span class="listyFavButtonLabel">$text</span></a>%TMPL:END%
+%TMPL:DEF{"listy::favbutton"}%<a href="#" $style class="jqFavButton listyFavButton $class" title="$title" rel="nofollow" data-auto-subscribe="$autosubscribe" data-is-favorite="$state" data-web="$favweb" data-topic="$favtopic" data-name="$name" data-collection="$collection" data-source="$source" data-favtext="$percntENCODE{$favtext}$percnt" data-unfavtext="$percntENCODE{$unfavtext}$percnt" data-favicon="$percntENCODE{$favicon}$percnt" data-unfavicon="$percntENCODE{$unfavicon}$percnt" data-favtitle="$percntENCODE{$favtitle}$percnt" data-unfavtitle="$percntENCODE{$unfavtitle}$percnt"><span class="listyFavButtonIcon">$icon</span><span class="listyFavButtonLabel">$text</span></a>%TMPL:END%
 
 %{ test tmpl ... never mind }%
 %TMPL:DEF{"listy::isloaded"}%true%TMPL:END%

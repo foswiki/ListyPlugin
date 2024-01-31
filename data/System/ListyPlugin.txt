@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1562054825" format="1.1"  version="1"}%
+%META:TOPICINFO{author="micha" comment="reprev" date="1693846316" format="1.1" reprev="15" version="15"}%
 ---+!! %TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -57,7 +57,7 @@ Note that any "mylinks" listy on the same page will automatically be updated as 
 will remove it from the listy again.
 
 ---+++ Scrum Board
-(with the help of [[Foswiki:Extensions/GridLayoutPlugin][GridLayoutPlugin]])
+(with the help of GridLayoutPlugin)
 
 <verbatim class="tml">
 %BEGINGRID{border="on"}%
@@ -147,7 +147,7 @@ to alter the =Status= formfield of the related topic while an entry is dragged f
 A listy can be integrated in a wiki application specifying a customized formatting for each listy item. Below
 renders each topic in a listy by displaying an image and part of its [[%SYSTEMWEB%.DataForms][DataForm]].
 
-(with the help of [[Foswiki:Extensions/ImagePlugin][ImagePlugin]] and [[Foswiki:Extensions/FlexFormPlugin][FlexFormPlugin]] and a custom !DataForm for movies)
+(with the help of ImagePlugin and FlexFormPlugin and a custom !DataForm for movies)
 
 <verbatim class="tml">
 %LISTY{
@@ -195,7 +195,8 @@ renders each topic in a listy by displaying an image and part of its [[%SYSTEMWE
 | =width= | width of listy widget, e.g. =width="500px" | |
 | =updatewidth= | boolean flag to enable/disable remembering the initial minimum width when the listy was rendered | =true= |
 | =class= | additional css class to be added to the listy widget | |
-| =query= | search query for topics to pre-fill a listy with items; this is either a normal [[%SYSTEMWEB%.QuerySearch][QuerySearch]] or a query using Foswiki:Extensions/DBCachePlugin in case it is installed | |
+| =query= | search query for topics to pre-fill a listy with items | |
+| =querytype= | can be =search=, =dbquery= or =solr=; note =dbquery= will use !DBCachePlugin if installed and =solr= will use !SolrPlugin if installed or plain search otherwise; the query language will vary depending on the query type |
 
 The parameters =format=, =topic_format=, =text_format=, =external_format= may use the following variables:
 
@@ -253,6 +254,7 @@ There are a couple of additional variables that are used in the =listyplugin.tmp
 | =animate= | animation to be added to the button, see [[%SYSTEMWEB%.VarJQICON]] | |
 | =showlabel= | boolean flag to show/hide the button label | on |
 | =showicon= | boolean flag to show/hide the button icon | on |
+| =autosubscribe= | boolean flag to automatically subscribe/unsubscribe to a topic if it is fav'ed | =%<nop>LISTY_AUTOSUBSCRIBE{default="off"}%= |
 
 Example:
 
@@ -307,6 +309,11 @@ topic any kind of content may be found, only some of it may be converted into a 
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  31 Jan 2024: | added =autosubscribe= to =%FAVBUTTON= |
+|  19 Oct 2023: | made js and css a proper jQuery module |
+|  04 Sep 2023: | added =querytype= parameter and support for !SolrPlugin |
+|  22 Jun 2023: | fixed reading the a topic title if the web property is empty |
+|  03 Jun 2022: | fixed i18n for =%FAVBUTTON= macro |
 |  03 May 2022: | using =tag= REST handler of !RenderPlugin now |
 |  01 Jul 2019: | fixes along the new tabpane api; recording author, modification date, create author and create date now |
 |  29 Jan 2019: | added =%FAVBUTTON= macro; \
@@ -326,7 +333,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ListyPlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2022 Michael Daum"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2024 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="[[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]]"}%
 %META:FIELD{name="Home" title="Home" value="https://foswiki.org/Extensions/ListyPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/ListyPlugin"}%

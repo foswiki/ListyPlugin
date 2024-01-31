@@ -1,7 +1,7 @@
 /*
- * jQuery favbutton plugin 1.10
+ * jQuery favbutton plugin 2.00
  *
- * (c)opyright 2017-2022 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2017-2023 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -15,6 +15,7 @@
   var defaults = {
     debug: false,
     dry: false,
+    autoSubscribe: false,
     animationClass: "faa-flash animated"
   };
 
@@ -114,7 +115,8 @@
             topic: self.opts.source,
             collection: self.opts.collection,
             listyWeb: self.opts.web,
-            listyTopic: self.opts.topic
+            listyTopic: self.opts.topic,
+            subscribe: self.opts.autoSubscribe ? true : undefined,
           },
           success: function(response) { 
             successCallback(response);
@@ -133,7 +135,8 @@
           params: {
             name: self.opts.name,
             topic: self.opts.source,
-            collection: self.opts.collection
+            collection: self.opts.collection,
+            subscribe: self.opts.autoSubscribe ? false : undefined,
           },
           success: function(response) { 
             successCallback(response);

@@ -1,7 +1,7 @@
 /*
  * jQuery listy plugin 6.00
  *
- * (c)opyright 2011-2022 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2023 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
