@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="micha" comment="reprev" date="1693846316" format="1.1" reprev="15" version="15"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1736789627" format="1.1"  version="1"}%
 ---+!! %TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -309,6 +309,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  13 Jan 2025: | reorganized js and css code |
 |  31 Jan 2024: | added =autosubscribe= to =%FAVBUTTON= |
 |  19 Oct 2023: | made js and css a proper jQuery module |
 |  04 Sep 2023: | added =querytype= parameter and support for !SolrPlugin |
@@ -333,7 +334,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 %META:FIELD{name="Release" title="Release" value="%25$RELEASE%25"}%
 %META:FIELD{name="Description" title="Description" value="%25$SHORTDESCRIPTION%25"}%
 %META:FIELD{name="Repository" title="Repository" value="https://github.com/foswiki/ListyPlugin"}%
-%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2024 Michael Daum"}%
+%META:FIELD{name="Copyright" title="Copyright" value="&copy; 2015-2025 Michael Daum"}%
 %META:FIELD{name="License" title="License" value="[[http://www.gnu.org/licenses/gpl.html][GPL (Gnu General Public License)]]"}%
 %META:FIELD{name="Home" title="Home" value="https://foswiki.org/Extensions/ListyPlugin"}%
 %META:FIELD{name="Support" title="Support" value="Foswiki:Support/ListyPlugin"}%

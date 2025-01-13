@@ -1,7 +1,7 @@
 /*
  * jQuery listy plugin 6.00
  *
- * (c)opyright 2011-2023 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2025 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -121,6 +121,12 @@
       }
     });
 
+    self.listyContainer.find(".jqListyItem").each(function() {
+      var $item = $(this).parent(),
+        data = self.getItemData($item.attr("id"));
+      $item.data(data);
+    });
+
     // init gui
     self.listyContainer.sortable({
       connectWith: ".jqListyEditable .jqListyContainer",
@@ -133,13 +139,31 @@
       //cursorAt : {"top": -16, "left": -16},
       //cursorAt : {"top": 0, "left": 0},
 
+      activate: function(event, ui) {
+        var sender = ui.sender.parent().data("listy"),
+          listy = $(this).parents(".jqListy:first"),
+          value = self.opts.collectionValue,
+          data = ui.item.data();
+
+        if (!self.isEqual(sender) && data.allowed && !data.allowed.includes(value)) {
+          //console.log("... item not allowed in ",value);
+          listy.addClass("jqListyDisabled");
+        }
+
+      },
+      deactivate: function(event, ui) {
+        var listy = $(this).parents(".jqListy:first");
+        listy.removeClass("jqListyDisabled");
+      },
+      
+
       start: function(event, ui) {
-        var $item = $(ui.item),
-            $placeholder = $(ui.placeholder),
-            height = $item.height();
+        var $placeholder = $(ui.placeholder),
+            height = ui.item.height();
+
         self.log("got a start in ", self.id);
         $placeholder.height(height);
-        $item.addClass("jqListySelected");
+        ui.item.addClass("jqListySelected");
       },
 
       remove: function(/*event, ui*/) {
@@ -147,11 +171,13 @@
       },
 
       receive: function(event, ui) {
-        var sender = ui.sender.parent().data("listy");
+        var sender = ui.sender.parent().data("listy"),
+            value = self.opts.collectionValue,
+            data = ui.item.data();
 
         self.log("got a receive in ", self.id);
 
-        if (self.isEqual(sender)) {
+        if (self.isEqual(sender) || (data.allowed && !data.allowed.includes(value))) {
 
           sender.listyContainer.sortable("cancel");
           sender.updateModified();
@@ -159,7 +185,7 @@
           self.listyContainer.sortable("cancel");
           self.updateModified();
 
-          self.showMessage("notice", $.i18n("sorry, can't drop elements here"));
+          self.showMessage("notice", $.i18n("Sorry, can't drop element here."));
           return;
         }
 
@@ -211,11 +237,8 @@
       },
 
       stop: function(event, ui) {
-        var $item = $(ui.item);
-
         //self.log("got a stop in ", self.id);
-
-        $item.removeClass("jqListySelected");
+        ui.item.removeClass("jqListySelected");
       }
     }).disableSelection();
 
@@ -265,14 +288,13 @@
     self.elem.find(".jqListyDelete").on("click", function() {
       var $this = $(this),
         $item = $this.parents("li:first"),
-        name = $item.attr("id"),
-        data = self.getItemData(name);
+        data = $item.data();
 
       self.dialog({
         name: "listy::confirmdelete",
         title: $.i18n("Delete Listy Item"),
         data: {
-          name: name,
+          name: data.name,
           title: data.title || data.topic || data.url,
           source: self.opts.source,
           collection: self.opts.collection
@@ -312,13 +334,12 @@
 
     // edit button behavior
     var _editHandler = function($item) {
-      var name = $item.attr("id"),
-          data = self.getItemData(name),
-          url = foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
+      var url = foswiki.getScriptUrl("rest", "JQueryPlugin", "tmpl", {
             load: "listyplugin",
             showcollections: self.opts.showCollections,
             topic: foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
-          });
+          }),
+          data = $item.data();
 
       self.dialog({
         url: url,
@@ -326,7 +347,8 @@
         data: {
           collection: self.opts.collection,
           allCollections: self.opts.allCollections,
-          name: name,
+          name: data.name,
+          index: data.index,
           source: self.opts.source,
           summary: data.summary,
           title: data.title,
@@ -394,7 +416,7 @@
         index = "";
 
       if ($thisItem.length) {
-        thisIndex = self.getItemData($thisItem.attr("id")).index - 1;
+        thisIndex = $thisItem.data("index") - 1;
         if ($nextItem.length) {
           nextIndex = 
           nextIndex = self.getItemData($nextItem.attr("id")).index - 1;
@@ -406,8 +428,8 @@
         if ($this.is(".top")) {
           $thisItem = self.listyContainer.find("> li:first");
           if ($thisItem.length) {
-          thisIndex = self.getItemData($thisItem.attr("id")).index;
-          index = thisIndex-1;
+            thisIndex = $thisItem.data("index");
+            index = thisIndex-1;
           }
         }
       }
@@ -471,15 +493,22 @@
    */
   Listy.prototype.getItemData = function(name) {
     var self = this,
-        data = {};
+        item = self.elem.find("#"+name),
+        data = {},
+        index;
 
-    self.elem.find("#"+name+" .jqListyData").each(function() {
+    item.find(".jqListyData").each(function() {
       data = $.extend(data, JSON.parse($(this).html()));
     });
 
-    if (typeof(data[name]) === 'undefined') {
+    data = data[name];
+
+    if (typeof(data) === 'undefined') {
       return {};
     }
+
+    data.allowed = item.find(".jqListyItem").data("allowed");
+
 /*
     $.each(data[name], function(key, val) {
       data[name][key] = decodeURIComponent(val).replace(/["&<>]/g, function(i) {
@@ -488,7 +517,11 @@
     });
 */
 
-    return data[name];
+    if (typeof(data.allowed) === "string") {
+      data.allowed = data.allowed.split(/\s*,\s*/);
+    }
+
+    return data;
   };
 
 

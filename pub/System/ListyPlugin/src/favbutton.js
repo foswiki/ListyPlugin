@@ -1,7 +1,7 @@
 /*
  * jQuery favbutton plugin 2.00
  *
- * (c)opyright 2017-2023 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2017-2025 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *

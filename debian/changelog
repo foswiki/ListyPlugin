@@ -1,0 +1,5 @@
+foswiki-listy-plugin (5.992-0+mdc0) jammy; urgency=low
+
+  * Initial debianization
+
+ -- Michael Daum <debian@michaeldaumconsulting.com>  Fri, 25 May 2012 13:59:51 +0200

@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2024 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2025 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -765,22 +765,6 @@ sub syncQueryListy {
     $seen{$item->{name}} = 1;
   }
 
-if (0) {
-  # remove unseen query items from listy items 
-  my $needsSave = 0;
-  my $meta;
-  foreach my $item (@listyItems) {
-    unless ($seen{$item->{name}}) {
-      #writeDebug("item $item->{name} not seen anymore ... removing");
-      ($meta) = Foswiki::Func::readTopic($this->{baseWeb}, $this->{baseTopic}) unless $meta;
-      $meta->remove($this->{metaDataName}, $item->{name});
-      $needsSave = 1;
-    }
-  }
-
-  Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
-}
-
   return @$queryItems;
 }
 
@@ -828,8 +812,7 @@ sub jsonRpcSaveListyItem {
 
   $meta->putKeyed($this->{metaDataName}, $newListy);
   $this->normalizeListyIndex($meta, $newListy->{collection});
-
-  Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
+  $meta->save(ignorepermissions=>1);
 
   if ($newListy->{type} eq "topic") {
     my $subscribe = $request->param("subscribe");
@@ -1033,8 +1016,7 @@ sub jsonRpcDeleteListyItem {
     unless defined $item;
 
   $meta->remove($this->{metaDataName}, $name);
-
-  Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
+  $meta->save(ignorepermissions=>1);
 
   if ($item->{type} eq 'topic') {
     my $subscribe = $request->param("subscribe");
@@ -1145,7 +1127,7 @@ sub jsonRpcSaveListy {
         $needsSave = 1;
       }
       writeDebug("changing formfield $collectionFormfield of " . $newListy->{web} . "." . $newListy->{topic} . " to $collectionValue") if $needsSave;
-      Foswiki::Func::saveTopic($newListy->{web}, $newListy->{topic}, $listyMeta) if $needsSave;
+      $listyMeta->save() if $needsSave;
     }
 
     $seen{$newListy->{name}} = 1;
@@ -1167,8 +1149,7 @@ sub jsonRpcSaveListy {
   }
 
   writeDebug("saving $this->{baseWeb}.$this->{baseTopic}");
-
-  Foswiki::Func::saveTopic($this->{baseWeb}, $this->{baseTopic}, $meta, undef, {ignorepermissions=>1});
+  $meta->save(ignorepermissions => 1);
 
   if (Foswiki::Func::getContext->{DBCachePluginEnabled}) {
     Foswiki::Plugins::DBCachePlugin::enableSaveHandler();
@@ -1369,7 +1350,7 @@ sub restImportSideBar {
 
     if ($needsSave) {
       print STDERR "### saving to $targetWeb.$targetTopic\n" if $verbose;
-      Foswiki::Func::saveTopic($targetWeb, $targetTopic, $targetMeta, undef, {ignorepermissions=>1}) unless $debug;
+      $targetMeta->save(ignorepermissions => 1) unless $debug;
       $index++;
     } else {
       print STDERR "### nothing changed\n" if $verbose;

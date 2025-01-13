@@ -1,0 +1,15 @@
+Source: foswiki-listy-plugin
+Section: web
+Priority: optional
+Maintainer: Michael Daum <debian@michaeldaumconsulting.com>
+Build-Depends: debhelper (>= 8)
+Standards-Version: 3.9.2
+Homepage: https://foswiki.org/Extensions/ListyPlugin
+
+Package: foswiki-listy-plugin
+Architecture: all
+Depends: ${misc:Depends}, foswiki-filter-plugin, foswiki-j-query-plugin, foswiki-json-rpc-contrib, foswiki-render-plugin
+Description: Fancy list manager
+ (...add your text here...)
+ .
+ See https://foswiki.org/Extensions/ListyPlugin for more.

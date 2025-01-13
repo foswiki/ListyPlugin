@@ -17,9 +17,9 @@ $header $topbuttons<ul class='jqListyContainer'>
 
 %{ listy tools}%
 %TMPL:DEF{"listy::item::tools"}%<span class='jqListyItemTools jqUITooltip' data-theme="info" data-arrow="true" data-delay="300" data-position="top">
-  <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"fa-pencil"}%</a>
-  <a href='#' class='jqListyAddHere' title='%MAKETEXT{"Insert a new item here"}%'>%JQICON{"fa-plus"}%</a>
-  <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"fa-minus"}%</a>
+  <a href='#' class='jqListyEdit' title='%MAKETEXT{"Edit this item"}%'>%JQICON{"ma-edit"}%</a>
+  <a href='#' class='jqListyAddHere' title='%MAKETEXT{"Insert a new item here"}%'>%JQICON{"ma-add"}%</a>
+  <a href='#' class='jqListyDelete' title='%MAKETEXT{"Delete this item"}%'>%JQICON{"ma-remove"}%</a>
 </span>%TMPL:END%
 
 %{ listy item formats}%
@@ -39,9 +39,9 @@ $header $topbuttons<ul class='jqListyContainer'>
 
 %{ listy buttons - add}%
 %TMPL:DEF{"listy::buttons::add"}%<!-- -->
-<li class='jqListyAdd $position'>%BUTTON{
+<li class='jqListyAdd'>%BUTTON{
     "%MAKETEXT{"Add item"}%"
-    icon="fa-plus"
+    icon="ma-add"
     class="jqButtonSimple"
     title="%MAKETEXT{"Append an item to the list"}%"
     style="float:none"

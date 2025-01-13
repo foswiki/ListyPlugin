@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="micha" comment="reprev" date="1619169101" format="1.1" reprev="1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1736789627" format="1.1"  version="1"}%
 %META:TOPICPARENT{name="ListyPlugin"}%
 ---+!! %TOPIC%
 
@@ -14,5 +14,3 @@
 | topic | topic | 30 | | | | |
 | url | text | 10 | | | | |
 
-
-%META:PREFERENCE{name="CREATED_WITH_TEMPLATETOPIC" title="CREATED_WITH_TEMPLATETOPIC" type="Local" value="System.WebTopicEditTemplate"}%

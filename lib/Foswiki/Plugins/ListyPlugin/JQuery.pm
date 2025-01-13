@@ -1,6 +1,6 @@
 # Extension for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# JQuery MetaCommentPlugin is Copyright (C) 2021-2024 Michael Daum 
+# JQuery MetaCommentPlugin is Copyright (C) 2021-2025 Michael Daum
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,10 +32,10 @@ sub new {
       version => $Foswiki::Plugins::ListyPlugin::VERSION,
       author => 'Michael Daum',
       homepage => 'https://foswiki.org/Extensions/ListyPlugin',
-      javascript => ['jquery.listy.js', 'jquery.favbutton.js'],
-      css => ['jquery.listy.css'],
-      puburl => '%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin',
-      i18n => '%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/i18n',
+      javascript => ['pkg.js'],
+      css => ['pkg.css'],
+      puburl => '%PUBURLPATH%/%SYSTEMWEB%/ListyPlugin/build',
+      i18n => $Foswiki::cfg{SystemWebName} . '/ListyPlugin/i18n',
       dependencies => ['ui', 'hoverIntent', 'jsonRpc', 'form', 'pnotify', 'blockui', 'tabpane', 'render', 'ui::tooltip', 'ui::dialog']
     ),
     $class
