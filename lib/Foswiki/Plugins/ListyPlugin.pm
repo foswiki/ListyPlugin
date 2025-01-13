@@ -30,7 +30,7 @@ use Foswiki::Plugins::JQueryPlugin ();
 use Foswiki::Contrib::JsonRpcContrib ();
 use Foswiki::Plugins::RenderPlugin ();
 
-our $VERSION = '5.992';
+our $VERSION = '6.00';
 our $RELEASE = '%$RELEASE%';
 our $SHORTDESCRIPTION = 'Fancy list manager';
 our $LICENSECODE = '%$LICENSECODE%';
