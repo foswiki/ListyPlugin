@@ -2,7 +2,6 @@ Foswiki::Plugins::RenderPlugin,>=7.00,perl,Required
 Foswiki::Plugins::JQueryPlugin,>=7.00,perl,Required
 Foswiki::Plugins::FilterPlugin,>=4.00,perl,Required
 Foswiki::Contrib::JsonRpcContrib,>=2.21,perl,Required
+Foswiki::Plugins::TopicTitlePlugin,>1.00,perl,Optional
 ONLYIF ( $Foswiki::Plugins::VERSION < 2.1)
 Foswiki::Plugins::ZonePlugin,>=3.1,perl,Required for Foswiki < 1.1
-ONLYIF ( $Foswiki::Plugins::VERSION < 2.6)
-Foswiki::Plugins::TopicTitlePlugin,>1.00,perl,Required for Foswiki < 2.2

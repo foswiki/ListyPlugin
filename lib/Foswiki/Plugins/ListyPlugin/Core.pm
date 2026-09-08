@@ -1,6 +1,6 @@
 # Plugin for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# ListyPlugin is Copyright (C) 2015-2025 Michael Daum http://michaeldaumconsulting.com
+# ListyPlugin is Copyright (C) 2015-2026 Michael Daum http://michaeldaumconsulting.com
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -101,6 +101,7 @@ sub LISTY {
   my $theCollection = $params->{_DEFAULT} || $params->{collection} || '';
   my $theHidenull = Foswiki::Func::isTrue($params->{hidenull}, 0);
   my $theTopic = $params->{topic} || $this->{baseTopic};
+  my $theWeb = $params->{web} || $this->{baseWeb};
   my $theCollections = $params->{collections};
   my $theShowCollections = Foswiki::Func::isTrue($params->{showcollections}, defined($theCollections));
   my $theCollectionFormfield = $params->{collection_formfield} || '';
@@ -115,8 +116,7 @@ sub LISTY {
   my %types = map {$_ => 1} split(/\s*,\s*/, $theTypes);
   my $theAutoSave = Foswiki::Func::isTrue($params->{autosave}, 1) ? 'true':'false';
 
-  my $theWeb;
-  ($theWeb, $theTopic) = Foswiki::Func::normalizeWebTopicName($this->{baseWeb}, $theTopic);
+  ($theWeb, $theTopic) = Foswiki::Func::normalizeWebTopicName($theWeb, $theTopic);
   #writeDebug("called LISTY ... web=$theWeb, topic=$theTopic");
 
   unless (Foswiki::Func::checkAccessPermission('VIEW', $wikiName, undef, $theTopic, $theWeb)) {
@@ -166,7 +166,7 @@ sub LISTY {
   } elsif ($theSort eq 'title') {
     $order{$_->{name}} = $_->{title} foreach @listyItems;
   } elsif ($theSort eq 'topictitle') {
-    $order{$_->{name}} = Foswiki::Func::getTopicTitle($_->{web}, $_->{topic}) foreach @listyItems;
+    $order{$_->{name}} = _getTopicTitle($_->{web}, $_->{topic}) foreach @listyItems;
   } else {
     $order{$_->{name}} = lc($a->{$theSort}||$a->{topic}||$a->{url}||$a->{title}) foreach @listyItems;
   }
@@ -379,11 +379,11 @@ sub getListyItemTitle {
   my $title = "";
 
   if ($item->{type} eq 'topic') {
-    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web} || $this->{baseWeb}, $item->{topic});
+    $title = $item->{title} || _getTopicTitle($item->{web} || $this->{baseWeb}, $item->{topic});
   } elsif ($item->{type} eq 'external') {
     $title = $item->{title} || $item->{url};
   } elsif ($item->{type} eq 'query') {
-    $title = $item->{title} || Foswiki::Func::getTopicTitle($item->{web} || $this->{baseWeb}, $item->{topic});
+    $title = $item->{title} || _getTopicTitle($item->{web} || $this->{baseWeb}, $item->{topic});
   } else {
     $title = $item->{title};
   }
@@ -1460,9 +1460,9 @@ sub solrIndexTopicHandler {
       'date' => Foswiki::Func::formatTime($item->{date}, 'iso', 'gmtime'),
       'date_s' => Foswiki::Func::formatTime($item->{date}),
       'author' => $item->{author} || 'unknown',
-      'author_title' => Foswiki::Func::getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{author} || 'unknown'),
+      'author_title' => _getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{author} || 'unknown'),
       'createauthor' => $item->{createauthor} || 'unknown',
-      'createauthor_title' => Foswiki::Func::getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{createauthor} || 'unknown'),
+      'createauthor_title' => _getTopicTitle($Foswiki::cfg{UsersWebName}, $item->{createauthor} || 'unknown'),
       'createdate' => Foswiki::Time::formatTime($item->{createdate} || 0, '$iso', 'gmtime'),
       'createdate_s' => Foswiki::Time::formatTime($item->{createdate} || 0),
        #'contributor' => $item->{author},
@@ -1471,7 +1471,7 @@ sub solrIndexTopicHandler {
       'container_web' => $web,
       'container_topic' => $topic,
       'container_url' => Foswiki::Func::getViewUrl($web, $topic),
-      'container_title' => Foswiki::Func::getTopicTitle($web, $topic, undef, $meta),
+      'container_title' => _getTopicTitle($web, $topic, undef, $meta),
  
       'field_Collection_s' => $item->{collection} // '',
       'field_Web_s' => $item->{web} // '',
@@ -1539,6 +1539,20 @@ formats an inline error message
 
 sub inlineError {
   return "<span class='foswikiAlert'>".$_[0]."</span>";
+}
+
+sub _getTopicTitle {
+  my $web = shift;
+  my $topic = shift;
+
+  return Foswiki::Func::getTopicTitle($web, $topic, @_) if $Foswiki::cfg{Plugins}{TopicTitlePlugin}{Enabled};
+
+  return $topic if $topic ne $Foswiki::cfg{HomeTopicName};
+
+  my $webTitle = $web;
+  $webTitle =~ s/^.*[\/\.]//;
+
+  return $webTitle;
 }
 
 1;

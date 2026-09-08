@@ -1,6 +1,6 @@
 # Extension for Foswiki - The Free and Open Source Wiki, http://foswiki.org/
 #
-# JQuery MetaCommentPlugin is Copyright (C) 2021-2025 Michael Daum
+# JQuery MetaCommentPlugin is Copyright (C) 2021-2026 Michael Daum
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License

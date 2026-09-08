@@ -1,7 +1,7 @@
 /*
- * jQuery listy plugin 6.00
+ * jQuery listy plugin 6.02
  *
- * (c)opyright 2011-2025 Michael Daum http://michaeldaumconsulting.com
+ * (c)opyright 2011-2026 Michael Daum http://michaeldaumconsulting.com
  *
  * Licensed under the GPL license http://www.gnu.org/licenses/gpl.html
  *
@@ -30,6 +30,7 @@
     if (typeof self.opts.allCollections === "string") {
       self.opts.allCollections = self.opts.allCollections.split(/\s*,\s*/);
     }
+
     self.init();
 
     //self.log("finished new()", self);
@@ -318,7 +319,6 @@
               });
 
               self.flagModified();
-              self.reload();
             },
             error: function(xhr) {
               var msg = JSON.parse(xhr.responseText).error.message;
@@ -546,7 +546,7 @@
         lines = [];
 
     $.each(self.opts.allCollections, function(index, elem) {
-      lines.push("<label><input type='radio' class='foswikiRadio' name='collection' value='"+elem+"' "+(elem === self.opts.collection ? "checked" : "")+">"+elem+"</label>");
+      lines.push("<label><input type='radio' class='foswikiRadioButton' name='collection' value='"+elem+"' "+(elem === self.opts.collection ? "checked" : "")+">"+elem+"</label>");
     });
 
     return lines.join("\n");
@@ -634,10 +634,10 @@
 
     params = $.extend({
       "name": "LISTY",
-      "web": foswiki.getPreference("WEB"),
-      "topic": foswiki.getPreference("WEB") + "." + foswiki.getPreference("TOPIC"),
       "render": "on"
     }, self.listyParams); // deep copy
+
+    params.topic = self.opts.source;
 
     return $.ajax({
       url: foswiki.getScriptUrl("rest", "RenderPlugin", "tag"),
@@ -903,10 +903,9 @@
    * enable declarative widget instanziation
    */
   $(".jqListyEditable").livequery(function() {
-    var $this = $(this),
-      opts = $.extend({}, defaults, $this.data());
+    var $this = $(this);
 
-    $this.addClass("jqInitedListy").listy(opts);
+    $this.addClass("jqInitedListy").listy();
   });
 
 })(jQuery);

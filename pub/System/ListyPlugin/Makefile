@@ -1,5 +1,5 @@
 FOSWIKI_ROOT?=~/foswiki/core
-TARGET= build/pkg.js build/pkg.css
+TARGET=build build/pkg.js build/pkg.css
 
 -include $(FOSWIKI_ROOT)/pub/System/JQueryPlugin/Makefile.include
 
@@ -8,6 +8,9 @@ PKG_CSS= src/listy.css
 
 clean:
 	rm -f build/*
+
+build:
+	@mkdir build
 
 build/pkg.js: $(PKG_JS)
 	@echo minifying $@ from $^; $(JSMIN) $^ > $@; \
