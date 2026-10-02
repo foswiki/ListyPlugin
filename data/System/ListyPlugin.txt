@@ -1,4 +1,4 @@
-%META:TOPICINFO{author="ProjectContributor" comment="" date="1736789627" format="1.1" version="1"}%
+%META:TOPICINFO{author="ProjectContributor" comment="" date="1790949077" format="1.1" version="1"}%
 ---+!! %TOPIC%
 %FORMFIELD{"Description"}%
 
@@ -309,6 +309,7 @@ topic any kind of content may be found, only some of it may be converted into a 
 ---++ Change History
 
 %TABLE{columnwidths="7em" tablewidth="100%"}%
+|  02 Oct 2026: | properly encode summary and title to prevent cross site scripting |
 |  08 Sep 2026: | make dependency on <nop>TopicTitlePlugin optional |
 |  13 Jan 2025: | reorganized js and css code |
 |  31 Jan 2024: | added =autosubscribe= to =%FAVBUTTON= |

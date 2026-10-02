@@ -205,7 +205,7 @@ sub LISTY {
     }
 
     my $class = 'jqListyItem';
-    my $summary = $item->{summary} || '';
+    my $summary = _encode($item->{summary} || '');
     my $url = '';
 
     my $web = $item->{web} || $this->{baseWeb};
@@ -226,7 +226,7 @@ sub LISTY {
       $class .= ' jqListyItemText';
     }
 
-    my $title = $this->getListyItemTitle($item);
+    my $title = _encode($this->getListyItemTitle($item));
 
     my $itemFormat = $this->_getFormatOfType($params, $item->{type});
 
@@ -1553,6 +1553,13 @@ sub _getTopicTitle {
   $webTitle =~ s/^.*[\/\.]//;
 
   return $webTitle;
+}
+
+sub _encode {
+  my $text = shift;
+
+  $text =~ s/([<>%'"])/'&#'.ord($1).';'/ge if $text;
+  return $text;
 }
 
 1;
